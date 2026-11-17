@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>Vitrine · Products, beautifully told.</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Vitrine is an AI product-card generator: type a product name and category, get a polished title, description and SEO keywords on a beautiful card you can edit and export." />
+    <meta name="author" content="Bapan Ghosh" />
+    <meta name="theme-color" content="#fbf7f0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="application-name" content="Vitrine" />
+    <meta name="apple-mobile-web-app-title" content="Vitrine" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta property="og:site_name" content="Vitrine" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Vitrine · Products, beautifully told." />
+    <meta property="og:description" content="AI-written product titles, descriptions and keywords on luxury cards you can edit and export." />
+    <meta property="og:image" content="%SITE_URL%/brand/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="%SITE_URL%/brand/og-image.png" />
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script>
+      (function () {
+        try {
+          var h = sessionStorage.getItem('vitrine.theme-hint') || localStorage.getItem('vitrine.theme-hint');
+          var t = h ? JSON.parse(h) : 'system';
+          if (t !== 'light' && t !== 'dark' && t !== 'oled') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "%SITE_URL%/#app",
+            "name": "Vitrine",
+            "alternateName": "Vitrine AI Product Cards",
+            "description": "AI product-card generator that writes product titles, short descriptions and SEO keywords and renders them on six card templates.",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "url": "%SITE_URL%/",
+            "image": "%SITE_URL%/brand/vitrine-icon.webp",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+            "author": { "@id": "%SITE_URL%/#author" },
+            "softwareVersion": "1.0.0",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "Person",
+            "@id": "%SITE_URL%/#author",
+            "name": "Bapan Ghosh",
+            "jobTitle": "Frontend Developer (Angular and React)",
+            "address": { "@type": "PostalAddress", "addressLocality": "Kolkata", "addressCountry": "IN" },
+            "sameAs": ["https://github.com/bapanghosh0812"]
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+    <noscript>
+      <p style="font-family: system-ui, sans-serif; padding: 24px; text-align: center">Vitrine needs JavaScript to generate product cards. The Help Center and legal pages work without it.</p>
+    </noscript>
+  </body>
+</html>

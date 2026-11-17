@@ -1,0 +1,26 @@
+{
+  "name": "Vitrine · AI product cards",
+  "short_name": "Vitrine",
+  "description": "AI-written product titles, descriptions and keywords on luxury cards you can edit and export.",
+  "id": "./",
+  "start_url": "./studio",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#fbf7f0",
+  "theme_color": "#0e4d3a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "shopping"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "New card", "short_name": "New", "url": "./studio?new=1", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Library", "url": "./library", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

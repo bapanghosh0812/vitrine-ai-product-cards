@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "server/**/*.ts",
+    "shared/**/*.ts",
+    "netlify/**/*.mts"
+  ],
+  "exclude": [
+    "server/**/*.spec.ts"
+  ]
+}

@@ -199,11 +199,11 @@ export function mockGenerate(input: GenerateInput, started = Date.now()): Genera
     const angle = MOCK_ANGLES[i % MOCK_ANGLES.length]!;
     const card = finaliseCopy(
       {
-        title: `${input.name}: ${angle.lead}`.slice(0, 60),
+        title: clampWords(`${input.name}: ${angle.lead}`, 60),
         description: `${input.name} brings ${category.toLowerCase()} done right: ${angle.mood}. ${
           input.features?.length ? `Highlights include ${input.features.slice(0, 2).join(' and ')}.` : 'Every detail is considered, from first look to daily use.'
         }`,
-        keywords: [input.name, category, `${category} online`, `best ${input.name}`, 'premium quality', 'gift idea'],
+        keywords: [input.name, category, `${input.name.split(' ').slice(-2).join(' ')} online`, `${category} gift`, 'premium quality', 'gift idea'],
       },
       input,
     );

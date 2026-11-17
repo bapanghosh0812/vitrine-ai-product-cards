@@ -40,12 +40,16 @@ export function tidyCopyText(value: string): string {
 }
 
 export function tidyKeyword(value: string): string {
-  return tidyCopyText(value)
+  const k = tidyCopyText(value)
     .replace(/^#/, '')
     .replace(/[.,;:!?]+$/g, '')
     .toLowerCase()
-    .slice(0, 32)
     .trim();
+  if (k.length <= 32) return k;
+  // Cut on a word boundary so keywords never end mid-word.
+  const cut = k.slice(0, 33);
+  const space = cut.lastIndexOf(' ');
+  return (space > 8 ? cut.slice(0, space) : k.slice(0, 32)).trim();
 }
 
 /** Trim a string to `max` characters on a word boundary, adding an ellipsis only when needed. */

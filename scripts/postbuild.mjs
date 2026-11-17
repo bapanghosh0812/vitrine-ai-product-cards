@@ -61,6 +61,26 @@ for (const file of htmlFiles) {
 }
 
 /* ------------------------------------------------------------------ */
+/* 1b. preload the two primary web fonts (faster LCP, no font-swap CLS) */
+/* ------------------------------------------------------------------ */
+const MEDIA = join(DIST, 'media');
+const fontFiles = existsSync(MEDIA)
+  ? readdirSync(MEDIA).filter((f) => /^(instrument-serif-latin-400-normal|geist-latin-wght-normal)-.*\.woff2$/.test(f))
+  : [];
+if (fontFiles.length) {
+  const links = fontFiles.map((f) => `<link rel="preload" href="media/${f}" as="font" type="font/woff2" crossorigin>`).join('');
+  for (const file of htmlFiles) {
+    const html = readFileSync(file, 'utf8');
+    if (!html.includes('rel="preload" href="media/')) {
+      // Must come after <base href>, otherwise relative URLs resolve against nested routes.
+      const next = /<base [^>]*>/i.test(html) ? html.replace(/<base [^>]*>/i, (m) => `${m}${links}`) : html.replace(/<\/title>/i, (m) => `${m}${links}`);
+      writeFileSync(file, next);
+      edited.add(file);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* 2. CSP from inline script hashes                                    */
 /* ------------------------------------------------------------------ */
 const hashes = new Set();
@@ -128,7 +148,7 @@ ${prerendered
 writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
 writeFileSync(
   join(DIST, 'robots.txt'),
-  `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /studio\nDisallow: /library\nDisallow: /settings\nDisallow: /profile\nDisallow: /admin\nDisallow: /auth/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`,
+  `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /library\nDisallow: /settings\nDisallow: /profile\nDisallow: /admin\nDisallow: /auth/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`,
 );
 
 /* ------------------------------------------------------------------ */

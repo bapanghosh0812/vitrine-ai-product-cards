@@ -10,6 +10,9 @@ import { GenerateForm } from './generate-form';
 
 @Component({
   selector: 'app-studio-page',
+  // Prerendered for a fast first paint, then rendered fresh in the browser so a restored
+  // draft or signed-in state never conflicts with the static HTML.
+  host: { ngSkipHydration: 'true' },
   imports: [GenerateForm, CardStage, DetailsPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

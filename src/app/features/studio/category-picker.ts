@@ -2,6 +2,7 @@ import { CdkMenu, CdkMenuItemRadio, CdkMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CATEGORIES } from '../../../../shared/constants';
+import { injectIsBrowser } from '../../core/platform';
 import { Emoji } from '../../shared/ui/emoji';
 import { Icon } from '../../shared/ui/icon';
 
@@ -20,7 +21,7 @@ import { Icon } from '../../shared/ui/icon';
       [attr.aria-invalid]="invalid()"
       [attr.aria-describedby]="describedBy() || null"
       aria-haspopup="menu"
-      [disabled]="disabled()"
+      [disabled]="disabled() || !browser"
       (cdkMenuClosed)="onTouched()"
     >
       @if (selected(); as c) {
@@ -68,6 +69,7 @@ export class CategoryPicker implements ControlValueAccessor {
   protected readonly categories = CATEGORIES;
   protected readonly value = signal('');
   protected readonly disabled = signal(false);
+  protected readonly browser = injectIsBrowser();
   protected readonly selected = computed(() => CATEGORIES.find((c) => c.id === this.value()) ?? null);
 
   private onChange: (v: string) => void = () => undefined;

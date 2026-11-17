@@ -8,6 +8,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
+import { brotliCompressSync, constants as zlibConstants, gzipSync } from 'node:zlib';
 import { getRequestListener } from '@hono/node-server';
 
 if (existsSync('.env.local') && !process.env['CI']) process.loadEnvFile('.env.local');
@@ -90,9 +91,23 @@ createServer((req, res) => {
       file = join(ROOT, 'index.csr.html');
     }
   }
-  const body = readFileSync(file);
+  let body = readFileSync(file);
+  const type = TYPES[extname(file)] ?? 'application/octet-stream';
+  // Compress text like Vercel/Netlify do, so local Lighthouse numbers are realistic.
+  const accept = String(req.headers['accept-encoding'] ?? '');
+  let encoding: string | undefined;
+  if (/text|javascript|json|xml|svg|manifest/.test(type) && body.length > 1024) {
+    if (accept.includes('br')) {
+      body = brotliCompressSync(body, { params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 9 } });
+      encoding = 'br';
+    } else if (accept.includes('gzip')) {
+      body = gzipSync(body, { level: 9 });
+      encoding = 'gzip';
+    }
+  }
   res.writeHead(status, {
-    'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream',
+    'Content-Type': type,
+    ...(encoding ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' } : {}),
     'Cache-Control': /\.(js|css)$/.test(file) && /(chunk|main|styles|polyfills)-/.test(file) ? 'public, max-age=31536000, immutable' : 'no-cache',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',

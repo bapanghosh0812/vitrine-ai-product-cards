@@ -55,7 +55,10 @@ export const routes: Routes = [
       {
         path: 'studio',
         loadComponent: () => import('./features/studio/studio.page'),
-        data: seo({ title: 'Studio', description: 'Generate a product title, description and keywords with AI and design the card.', noindex: true }),
+        data: seo({
+          title: 'Studio',
+          description: 'Free AI product description generator: enter a product name and category to get a title, short description and SEO keywords on a styled card.',
+        }),
       },
       {
         path: 'library',

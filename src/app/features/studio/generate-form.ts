@@ -4,7 +4,7 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validatio
 import { RouterLink } from '@angular/router';
 import { CURRENCIES, LANGUAGES, LIMITS, TONES, type CurrencyId, type LanguageId, type ToneId } from '../../../../shared/constants';
 import { BrandKitService } from '../../core/brand-kit.service';
-import { mediaMatches } from '../../core/platform';
+import { injectIsBrowser, mediaMatches } from '../../core/platform';
 import { StudioStore, type StudioForm } from '../../state/studio.store';
 import { Icon } from '../../shared/ui/icon';
 import { CategoryPicker } from './category-picker';
@@ -49,6 +49,7 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
             class="field"
             formControlName="name"
             autocomplete="off"
+            [readOnly]="!browser"
             [attr.maxlength]="limits.nameMax"
             placeholder="e.g. Handwoven Banarasi silk saree"
             [attr.aria-invalid]="showError('name')"
@@ -173,7 +174,7 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
         }
 
         <div class="grid gap-2">
-          <button type="submit" class="btn btn-gold btn-lg w-full" [disabled]="store.busy() || cooldown() > 0" data-testid="generate">
+          <button type="submit" class="btn btn-gold btn-lg w-full" [disabled]="!browser || store.busy() || cooldown() > 0" data-testid="generate">
             @if (store.phase() === 'generating') {
               <span class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
               Writing your card…
@@ -193,6 +194,8 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
 })
 export class GenerateForm {
   protected readonly store = inject(StudioStore);
+  /** The prerendered (static) form is read-only until the app boots, so no typing is lost. */
+  protected readonly browser = injectIsBrowser();
   protected readonly brandKit = inject(BrandKitService);
   private readonly destroyRef = inject(DestroyRef);
 

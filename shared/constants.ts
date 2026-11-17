@@ -136,4 +136,3 @@ export const SUPPORT_ACTIONS = {
 export type SupportActionId = keyof typeof SUPPORT_ACTIONS;
 export const SUPPORT_ACTION_IDS = Object.keys(SUPPORT_ACTIONS) as SupportActionId[];
 
-export const DEMO_EMAIL = 'demo.vitrine@example.com';

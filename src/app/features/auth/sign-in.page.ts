@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { PUBLIC_ENV } from '../../../environments/public-env';
 import { AuthService, authMessage } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { Icon } from '../../shared/ui/icon';
@@ -15,15 +14,7 @@ import { GoogleButton } from './google-button';
     <h1 class="font-display text-[2.6rem] leading-tight text-ink">Welcome back</h1>
     <p class="mt-2 text-muted">Sign in to sync your cards, Brand Kit and settings.</p>
 
-    @if (auth.demoAvailable) {
-      <button type="button" class="btn btn-gold btn-lg mt-8 w-full" (click)="demo()" [disabled]="busy()" data-testid="demo-login">
-        <app-icon name="sparkles" [size]="18" /> Try the demo account
-      </button>
-      <p class="mt-2 text-center text-xs text-muted">Recruiters and reviewers: one click, no sign-up. Resets every hour.</p>
-      <div class="my-7 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-muted"><span class="divider flex-1"></span>or<span class="divider flex-1"></span></div>
-    } @else {
-      <div class="mt-8"></div>
-    }
+    <div class="mt-8"></div>
 
     <app-google-button [disabled]="busy() || !auth.enabled" (signedIn)="done()" (failed)="error.set($event)" />
 
@@ -61,6 +52,7 @@ import { GoogleButton } from './google-button';
       </button>
     </form>
     <p class="mt-6 text-center text-sm text-muted">New to Vitrine? <a routerLink="/auth/sign-up" [queryParams]="{ next: next() }" class="link font-medium">Create a free account</a></p>
+    <p class="mt-2 text-center text-sm text-muted">No account needed to try it: <a routerLink="/studio" class="link font-medium">continue as a guest</a>.</p>
   `,
 })
 export default class SignInPage {
@@ -86,10 +78,6 @@ export default class SignInPage {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     await this.run(() => this.auth.signIn(this.form.controls.email.value, this.form.controls.password.value));
-  }
-
-  protected async demo(): Promise<void> {
-    await this.run(() => this.auth.signInDemo(), `Signed in as ${PUBLIC_ENV.demoEmail}`);
   }
 
   private async run(action: () => Promise<unknown>, message = 'Signed in'): Promise<void> {

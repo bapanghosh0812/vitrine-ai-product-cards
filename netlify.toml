@@ -1,0 +1,27 @@
+# Netlify: static Angular build + one Netlify Function for the Hono API.
+[build]
+  command = "npm run build:netlify"
+  publish = "dist/vitrine/browser"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NPM_FLAGS = "--no-audit --no-fund"
+  AI_BUDGET_MS = "8500"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin"]
+
+# API: /api/* -> the "api" function (the function normalises the path back to /api/*)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback for client-rendered routes (prerendered pages are served as files first)
+[[redirects]]
+  from = "/*"
+  to = "/index.csr.html"
+  status = 200

@@ -44,7 +44,7 @@ export class GuestImport {
       const uid = this.auth.user()?.uid;
       const ready = this.profile.loaded() && !this.profile.needsConsent();
       untracked(() => {
-        if (!uid || !ready || this.auth.isDemo()) return this.count.set(0);
+        if (!uid || !ready) return this.count.set(0);
         const dismissed = this.storage.get<string[]>('guest-import-dismissed', [], 'essential');
         if (dismissed.includes(uid)) return this.count.set(0);
         this.count.set(this.repo.guestCards().length);

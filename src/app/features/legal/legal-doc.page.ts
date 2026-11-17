@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LEGAL_DOCS } from '../../../../shared/content/legal.generated';
+import { fillContentTokens } from '../../core/content-tokens';
 import { SeoService } from '../../core/seo.service';
 import { Icon } from '../../shared/ui/icon';
 import { RouterContent } from '../../shared/ui/router-content';
@@ -11,7 +12,7 @@ import { RouterContent } from '../../shared/ui/router-content';
   imports: [RouterLink, Icon, RouterContent, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (doc(); as d) {
+    @if (entry(); as d) {
       <div class="mx-auto grid max-w-6xl gap-10 px-6 py-12 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <aside class="hidden lg:block">
           <nav class="scrollbar-thin sticky top-24 max-h-[calc(100dvh-8rem)] overflow-y-auto pr-2" aria-label="On this page">
@@ -32,7 +33,7 @@ import { RouterContent } from '../../shared/ui/router-content';
             <span>Version {{ d.version }}</span><span>Last updated {{ d.updated }}</span><span>{{ d.words | number }} words</span>
           </p>
           <div class="divider my-8"></div>
-          <app-router-content class="prose-vitrine block max-w-3xl" [html]="d.html" />
+          <app-router-content class="prose-vitrine block max-w-3xl" [html]="html()" />
           <div class="divider my-10"></div>
           <nav class="flex flex-wrap gap-2 text-sm" aria-label="Other policies">
             @for (o of others(); track o.slug) {
@@ -50,14 +51,15 @@ import { RouterContent } from '../../shared/ui/router-content';
   `,
 })
 export default class LegalDocPage {
-  readonly doc$ = input<string>('', { alias: 'doc' });
+  readonly doc = input<string>('');
   private readonly seo = inject(SeoService);
-  protected readonly doc = computed(() => LEGAL_DOCS.find((d) => d.slug === this.doc$()) ?? null);
-  protected readonly others = computed(() => LEGAL_DOCS.filter((d) => d.slug !== this.doc$()));
+  protected readonly entry = computed(() => LEGAL_DOCS.find((d) => d.slug === this.doc()) ?? null);
+  protected readonly html = computed(() => fillContentTokens(this.entry()?.html ?? ''));
+  protected readonly others = computed(() => LEGAL_DOCS.filter((d) => d.slug !== this.doc()));
 
   constructor() {
     effect(() => {
-      const d = this.doc();
+      const d = this.entry();
       if (d) this.seo.set({ title: d.title, description: d.summary, type: 'article' });
       else this.seo.set({ title: 'Document not found', description: 'This legal document does not exist.', noindex: true });
     });

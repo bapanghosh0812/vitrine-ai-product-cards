@@ -56,3 +56,12 @@ src/environments/public-env.ts
 /reports/raw
 *.local.json
 service-account*.json
+
+# Local editor/agent config
+/.claude
+
+# Emulator and tool logs
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

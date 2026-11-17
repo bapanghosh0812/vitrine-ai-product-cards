@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { LIMITS, SUPPORT_ACTIONS, type SupportActionId } from '../../../../shared/constants';
 import { PUBLIC_ENV } from '../../../environments/public-env';
 import { AuthService } from '../../core/auth.service';
+import { mediaMatches } from '../../core/platform';
 import { ThemeService } from '../../core/theme.service';
 import { ToastService } from '../../core/toast.service';
 import { renderMiniMarkdown, stripActionMarker } from '../../shared/mini-markdown';
@@ -16,6 +17,7 @@ import { TicketService } from './ticket.service';
   selector: 'app-ask-kabir',
   imports: [A11yModule, Icon, ReactiveFormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(click)': 'onContentClick($event)' },
   template: `
     <!-- Launcher -->
     @if (!chat.open()) {
@@ -26,7 +28,7 @@ import { TicketService } from './ticket.service';
         aria-label="Ask Kabir, the support assistant"
         data-testid="kabir-launcher"
       >
-        <span class="relative grid size-11 place-items-center overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_30%,#f6e3ae,#c9a35b_60%,#8f6e33)] ring-2 ring-[rgb(255_255_255/0.6)]">
+        <span class="bob relative grid size-11 place-items-center overflow-hidden rounded-full bg-[radial-gradient(circle_at_50%_30%,#f6e3ae,#c9a35b_60%,#8f6e33)] ring-2 ring-[rgb(255_255_255/0.6)]">
           <img src="brand/kabir-head.webp" alt="" width="44" height="44" class="size-11 translate-y-0.5 object-cover" />
         </span>
         <span class="text-sm font-semibold">Ask Kabir</span>
@@ -62,7 +64,7 @@ import { TicketService } from './ticket.service';
         </header>
 
         @if (chat.view() === 'chat') {
-          <div #scroller class="scrollbar-thin flex-1 overflow-y-auto px-4 py-4" aria-live="polite" aria-relevant="additions text" (click)="onContentClick($event)">
+          <div #scroller class="scrollbar-thin flex-1 overflow-y-auto px-4 py-4" aria-live="polite" aria-relevant="additions text">
             @if (chat.isEmpty()) {
               <div class="animate-fade">
                 <div class="flex items-end gap-3">
@@ -208,7 +210,11 @@ import { TicketService } from './ticket.service';
       color: var(--ink);
       border: 1px solid var(--line);
       transition: transform 0.5s var(--ease-spring-bouncy);
+    }
+    /* Only the face bobs; the button itself stays still so it is easy to hit. */
+    .bob {
       animation: float 5s ease-in-out infinite;
+      --float-rot: 0deg;
     }
     .launcher:hover {
       transform: translateY(-3px) scale(1.03);
@@ -299,7 +305,7 @@ export class AskKabir {
     if (!action) return;
     if (action.kind === 'navigate') {
       void this.router.navigateByUrl(action.target);
-      if (window.matchMedia('(max-width: 639px)').matches) this.close();
+      if (mediaMatches('(max-width: 639px)')) this.close();
     } else if (action.kind === 'theme') {
       this.theme.set(action.target as 'light' | 'dark' | 'oled');
       this.toast.success('Theme updated');

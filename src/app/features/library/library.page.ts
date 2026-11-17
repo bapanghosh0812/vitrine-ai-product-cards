@@ -69,9 +69,7 @@ import { Icon } from '../../shared/ui/icon';
               <button type="button" class="icon-btn size-8" (click)="fav(card)" [attr.aria-pressed]="card.favourite" [attr.aria-label]="card.favourite ? 'Remove from favourites' : 'Add to favourites'">
                 <app-icon name="star" [size]="16" [class.fill-current]="card.favourite" [class.text-gilt]="card.favourite" />
               </button>
-              @if (!auth.isDemo()) {
-                <button type="button" class="icon-btn size-8 hover:!text-danger" (click)="remove(card)" [attr.aria-label]="'Delete ' + card.name"><app-icon name="trash" [size]="16" /></button>
-              }
+              <button type="button" class="icon-btn size-8 hover:!text-danger" (click)="remove(card)" [attr.aria-label]="'Delete ' + card.name"><app-icon name="trash" [size]="16" /></button>
             </div>
           </li>
         }

@@ -10,7 +10,7 @@ import { Logo } from '../../shared/ui/logo';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'grid min-h-dvh bg-bg lg:grid-cols-[1.05fr_1fr]' },
   template: `
-    <aside class="relative hidden overflow-hidden bg-[radial-gradient(90%_70%_at_30%_20%,#1a7a5d_0%,#0e4d3a_45%,#05231a_100%)] text-ivory-100 lg:block" aria-hidden="true">
+    <aside class="relative hidden overflow-hidden bg-[radial-gradient(90%_70%_at_30%_20%,#1a7a5d_0%,#0e4d3a_45%,#05231a_100%)] text-ivory-100 lg:block" aria-label="About Vitrine">
       <div class="absolute inset-0 bg-grain opacity-60"></div>
       <div class="absolute -right-24 top-24 size-[28rem] rounded-full bg-[radial-gradient(closest-side,rgb(214_182_114/0.35),transparent)]"></div>
       <div class="relative flex h-full flex-col p-12">

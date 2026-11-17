@@ -373,7 +373,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "open-library"
   ],
   "updated": "2026-11-17",
-  "html": "<p>The Library keeps every card you save.</p>\n<h2 id=\"saving\">Saving</h2>\n<p>Press <strong>Save</strong> in the Studio toolbar. Guests save to this browser; signed-in users save to their account and see the same Library on every device.</p>\n<h2 id=\"favourites-and-search\">Favourites and search</h2>\n<p>Star a card to add it to Favourites. Use the search box to find cards by name, title, description or keyword, and filter by category or favourites.</p>\n<h2 id=\"open-or-delete\">Open or delete</h2>\n<p>Open a card to continue editing it in the Studio. Delete removes it permanently from the Library (the demo account cannot delete its sample cards).</p>\n",
+  "html": "<p>The Library keeps every card you save.</p>\n<h2 id=\"saving\">Saving</h2>\n<p>Press <strong>Save</strong> in the Studio toolbar. Guests save to this browser; signed-in users save to their account and see the same Library on every device.</p>\n<h2 id=\"favourites-and-search\">Favourites and search</h2>\n<p>Star a card to add it to Favourites. Use the search box to find cards by name, title, description or keyword, and filter by category or favourites.</p>\n<h2 id=\"open-or-delete\">Open or delete</h2>\n<p>Open a card to continue editing it in the Studio. Delete removes it permanently from the Library.</p>\n",
   "toc": [
    {
     "id": "saving",
@@ -403,7 +403,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    },
    {
     "heading": "Open or delete",
-    "text": "Open a card to continue editing it in the Studio. Delete removes it permanently from the Library (the demo account cannot delete its sample cards)."
+    "text": "Open a card to continue editing it in the Studio. Delete removes it permanently from the Library."
    }
   ]
  },
@@ -527,59 +527,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
    {
     "heading": "Updated terms",
     "text": "When the Terms of Service or Privacy Policy change, you are asked to review and accept the new version before continuing."
-   }
-  ]
- },
- {
-  "slug": "demo-account",
-  "title": "Demo account",
-  "summary": "The shared demo login for reviewers, what it can and cannot do, and when it resets.",
-  "category": "Account",
-  "order": 10,
-  "keywords": [
-   "demo",
-   "reviewer",
-   "recruiter",
-   "try",
-   "test account",
-   "sample",
-   "reset"
-  ],
-  "actions": [
-   "open-sign-in"
-  ],
-  "updated": "2026-11-17",
-  "html": "<p>Vitrine has a shared demo account so reviewers can explore every signed-in feature without creating an account.</p>\n<h2 id=\"how-to-use-it\">How to use it</h2>\n<p>Press <strong>Try demo account</strong> on the Sign in page or the home page. The credentials are also listed in the project README.</p>\n<h2 id=\"restrictions\">Restrictions</h2>\n<p>The demo account is a normal user with a special flag. To keep it usable for everyone, it cannot change its email or password, cannot delete the account, and cannot delete its sample cards. These rules are enforced by the database security rules, not only hidden in the interface.</p>\n<h2 id=\"resets\">Resets</h2>\n<p>Sample cards, Brand Kit and profile are restored automatically every hour, so anything you change in the demo is temporary. Please do not enter personal information in the demo account.</p>\n",
-  "toc": [
-   {
-    "id": "how-to-use-it",
-    "title": "How to use it"
-   },
-   {
-    "id": "restrictions",
-    "title": "Restrictions"
-   },
-   {
-    "id": "resets",
-    "title": "Resets"
-   }
-  ],
-  "sections": [
-   {
-    "heading": "Overview",
-    "text": "Vitrine has a shared demo account so reviewers can explore every signed-in feature without creating an account."
-   },
-   {
-    "heading": "How to use it",
-    "text": "Press Try demo account on the Sign in page or the home page. The credentials are also listed in the project README."
-   },
-   {
-    "heading": "Restrictions",
-    "text": "The demo account is a normal user with a special flag. To keep it usable for everyone, it cannot change its email or password, cannot delete the account, and cannot delete its sample cards. These rules are enforced by the database security rules, not only hidden in the interface."
-   },
-   {
-    "heading": "Resets",
-    "text": "Sample cards, Brand Kit and profile are restored automatically every hour, so anything you change in the demo is temporary. Please do not enter personal information in the demo account."
    }
   ]
  },

@@ -6,10 +6,11 @@
  */
 
 const PATTERNS: { name: string; re: RegExp }[] = [
-  { name: 'groq-key', re: /gsk_[A-Za-z0-9]{20,}/g },
-  { name: 'google-key', re: /AIza[0-9A-Za-z\-_]{30,}/g },
-  { name: 'openai-key', re: /sk-(?:proj-)?[A-Za-z0-9_-]{20,}/g },
-  { name: 'github-token', re: /gh[pousr]_[A-Za-z0-9]{30,}/g },
+  { name: 'groq-key', re: /\bgsk_[A-Za-z0-9]{20,}/g },
+  { name: 'google-key', re: /\bAIza[0-9A-Za-z\-_]{30,}/g },
+  // \b keeps ordinary words such as "ask-kabir-support-assistant" from matching
+  { name: 'openai-key', re: /\bsk-(?:proj-)?(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{20,}/g },
+  { name: 'github-token', re: /\bgh[pousr]_[A-Za-z0-9]{30,}/g },
   { name: 'slack-token', re: /xox[baprs]-[A-Za-z0-9-]{10,}/g },
   { name: 'aws-key', re: /AKIA[0-9A-Z]{16}/g },
   { name: 'jwt', re: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g },

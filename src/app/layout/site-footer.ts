@@ -34,7 +34,7 @@ import { Logo } from '../shared/ui/logo';
           <ul class="mt-4 grid gap-2.5 text-sm">
             <li><a routerLink="/help" class="text-ink-soft hover:text-ink">Help Center</a></li>
             <li><a routerLink="/help/contact-support" class="text-ink-soft hover:text-ink">Contact support</a></li>
-            <li><a routerLink="/help/demo-account" class="text-ink-soft hover:text-ink">Demo account</a></li>
+            <li><a routerLink="/help/getting-started" class="text-ink-soft hover:text-ink">Getting started</a></li>
             <li><a [href]="repo + '/issues'" target="_blank" rel="noopener noreferrer" class="text-ink-soft hover:text-ink">Report an issue</a></li>
           </ul>
         </nav>

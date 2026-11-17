@@ -1,6 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import type { User, UserCredential } from 'firebase/auth';
-import { PUBLIC_ENV } from '../../environments/public-env';
 import { FirebaseService } from './firebase.service';
 import { injectIsBrowser } from './platform';
 
@@ -11,7 +10,6 @@ export interface SessionUser {
   photoURL: string | null;
   emailVerified: boolean;
   providers: string[];
-  isDemo: boolean;
   isAdmin: boolean;
   createdAt: string | null;
 }
@@ -62,10 +60,8 @@ export class AuthService {
   readonly status = this._status.asReadonly();
   readonly user = this._user.asReadonly();
   readonly isSignedIn = computed(() => this._status() === 'user');
-  readonly isDemo = computed(() => this._user()?.isDemo === true);
   readonly isAdmin = computed(() => this._user()?.isAdmin === true);
   readonly enabled = this.firebase.enabled;
-  readonly demoAvailable = !!(PUBLIC_ENV.demoEmail && PUBLIC_ENV.demoPassword) && this.firebase.enabled;
 
   /** Resolves once the first auth state is known. */
   private readyResolve!: () => void;
@@ -114,7 +110,6 @@ export class AuthService {
       photoURL: u.photoURL,
       emailVerified: u.emailVerified,
       providers: u.providerData.map((p) => p.providerId),
-      isDemo: claims['demo'] === true || (u.email ?? '').toLowerCase() === PUBLIC_ENV.demoEmail.toLowerCase(),
       isAdmin: claims['admin'] === true,
       createdAt: u.metadata.creationTime ?? null,
     };
@@ -131,10 +126,6 @@ export class AuthService {
   async signIn(email: string, password: string): Promise<UserCredential> {
     const { auth, authMod } = await this.sdk();
     return authMod.signInWithEmailAndPassword(auth, email.trim(), password);
-  }
-
-  async signInDemo(): Promise<UserCredential> {
-    return this.signIn(PUBLIC_ENV.demoEmail, PUBLIC_ENV.demoPassword);
   }
 
   async signUp(name: string, email: string, password: string): Promise<UserCredential> {
@@ -217,7 +208,6 @@ export class AuthService {
   }
 
   async changePassword(current: string, next: string): Promise<void> {
-    if (this.isDemo()) throw new AuthError('demo', 'The demo account cannot change its password.');
     const { auth, authMod } = await this.sdk();
     const u = auth.currentUser;
     if (!u?.email) throw new AuthError('no-user', 'Please sign in first.');
@@ -225,18 +215,29 @@ export class AuthService {
     await authMod.updatePassword(u, next);
   }
 
-  /** Deletes the Firebase Auth user. Firestore data is removed by the caller first. */
-  async deleteCurrentUser(password?: string): Promise<void> {
-    if (this.isDemo()) throw new AuthError('demo', 'The demo account cannot be deleted.');
+  /** Confirms identity right before a sensitive action (password for email users, Google popup otherwise). */
+  async reauthenticate(password?: string): Promise<void> {
     const { auth, authMod } = await this.sdk();
     const u = auth.currentUser;
-    if (!u) return;
-    if (password && u.email) {
+    if (!u) throw new AuthError('no-user', 'Please sign in first.');
+    if (u.providerData.some((p) => p.providerId === 'password') && u.email) {
+      if (!password) throw new AuthError('auth/missing-password', 'Please enter your password to continue.');
       await authMod.reauthenticateWithCredential(u, authMod.EmailAuthProvider.credential(u.email, password));
     } else if (u.providerData.some((p) => p.providerId === 'google.com')) {
       await authMod.reauthenticateWithPopup(u, new authMod.GoogleAuthProvider());
     }
+  }
+
+  /** Deletes the Firebase Auth user. Call reauthenticate() and remove Firestore data first. */
+  async deleteCurrentUser(): Promise<void> {
+    const { auth, authMod } = await this.sdk();
+    const u = auth.currentUser;
+    if (!u) return;
     await authMod.deleteUser(u);
+  }
+
+  hasPasswordProvider(): boolean {
+    return this._user()?.providers.includes('password') ?? false;
   }
 
   private basePath(): string {

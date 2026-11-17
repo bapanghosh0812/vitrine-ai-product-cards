@@ -26,15 +26,15 @@ interface Command {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (palette.isOpen()) {
-      <div class="fixed inset-0 z-[80] flex items-start justify-center bg-black/30 px-4 pt-[12vh] backdrop-blur-sm animate-fade" (click)="palette.close()">
+      <div class="fixed inset-0 z-[80] flex items-start justify-center px-4 pt-[12vh] animate-fade">
+        <button type="button" class="absolute inset-0 cursor-default bg-black/30 backdrop-blur-sm" tabindex="-1" aria-label="Close" (click)="palette.close()"></button>
         <div
           role="dialog"
           aria-modal="true"
           [attr.aria-label]="palette.mode() === 'commands' ? 'Command palette' : 'Keyboard shortcuts'"
-          class="surface shadow-float w-full max-w-xl animate-pop overflow-hidden !rounded-3xl"
+          class="surface shadow-float relative w-full max-w-xl animate-pop overflow-hidden !rounded-3xl"
           cdkTrapFocus
           [cdkTrapFocusAutoCapture]="true"
-          (click)="$event.stopPropagation()"
           (keydown.escape)="palette.close()"
         >
           @if (palette.mode() === 'commands') {
@@ -70,8 +70,10 @@ interface Command {
                   class="flex h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm text-ink-soft"
                   [class.bg-[color-mix(in_oklab,var(--accent)_10%,transparent)]]="i === index()"
                   [class.text-ink]="i === index()"
+                  tabindex="-1"
                   (mouseenter)="index.set(i)"
                   (click)="run(cmd)"
+                  (keydown.enter)="run(cmd)"
                 >
                   <app-icon [name]="cmd.icon" [size]="17" />
                   <span class="flex-1 truncate">{{ cmd.label }}</span>

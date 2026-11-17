@@ -1,0 +1,129 @@
+rules_version = '2';
+
+// Vitrine Firestore security rules
+// - Every user document and card is readable and writable only by its owner.
+// - Every write is validated: allowed keys only, types, string lengths, list sizes.
+// - Clients can never set roles: admin comes only from a verified custom claim.
+// - Support tickets: owners create and read their own; only admins read all or change status.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- helpers
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return signedIn() && request.auth.token.get('admin', false) == true;
+    }
+    function str(v, max) {
+      return v is string && v.size() <= max;
+    }
+    function optStr(data, key, max) {
+      return !(key in data) || data[key] == null || str(data[key], max);
+    }
+
+    // ---------------------------------------------------------------- profile
+    function validConsent(c) {
+      return c == null
+        || (c is map
+            && c.keys().hasOnly(['termsVersion', 'privacyVersion', 'acceptedAt'])
+            && str(c.termsVersion, 20)
+            && str(c.privacyVersion, 20)
+            && c.acceptedAt is int);
+    }
+    function validBrandKit(b) {
+      return b is map
+        && b.keys().hasOnly(['brandName', 'voice', 'avoid', 'colours', 'enabled'])
+        && optStr(b, 'brandName', 60)
+        && optStr(b, 'voice', 240)
+        && optStr(b, 'avoid', 160)
+        && (!('colours' in b) || (b.colours is list && b.colours.size() <= 5));
+    }
+    function validStats(s) {
+      return s is map
+        && s.keys().hasOnly(['generated', 'saved', 'exported', 'templatesUsed'])
+        && s.generated is int && s.generated >= 0
+        && s.saved is int && s.saved >= 0
+        && s.exported is int && s.exported >= 0
+        && s.templatesUsed is list && s.templatesUsed.size() <= 12;
+    }
+    function validProfile(d) {
+      return d.keys().hasOnly(['displayName', 'avatar', 'consent', 'brandKit', 'settings', 'stats', 'createdAt', 'updatedAt'])
+        && str(d.displayName, 60)
+        && str(d.avatar, 32) && d.avatar.matches('^[a-z0-9-]+$')
+        && validConsent(d.consent)
+        && validBrandKit(d.brandKit)
+        && d.settings is map && d.settings.size() <= 40
+        && validStats(d.stats)
+        && d.createdAt is int
+        && d.updatedAt is int;
+    }
+
+    // ---------------------------------------------------------------- cards
+    function validCopy(c) {
+      return c is map
+        && c.keys().hasOnly(['title', 'description', 'keywords'])
+        && str(c.title, 80)
+        && str(c.description, 400)
+        && c.keywords is list && c.keywords.size() <= 10;
+    }
+    function validCard(d) {
+      return d.keys().hasOnly(['name', 'category', 'template', 'copy', 'inputs', 'image', 'favourite', 'createdAt', 'updatedAt', 'provider'])
+        && str(d.name, 80)
+        && str(d.category, 20)
+        && d.template in ['minimal', 'luxe', 'glass', 'bold', 'instagram', 'marketplace']
+        && validCopy(d.copy)
+        && d.inputs is map && d.inputs.size() <= 8
+        && (!('image' in d) || d.image == null
+            || (d.image is string && d.image.size() <= 420000 && d.image.matches('^data:image/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$')))
+        && d.favourite is bool
+        && d.createdAt is int
+        && d.updatedAt is int
+        && optStr(d, 'provider', 16);
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validProfile(request.resource.data);
+      allow update: if isOwner(uid)
+        && validProfile(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      match /cards/{cardId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && cardId.size() <= 40 && validCard(request.resource.data);
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // ---------------------------------------------------------------- tickets
+    match /tickets/{ticketId} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && ticketId.matches('^VT-[A-Z0-9]{6}$')
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'subject', 'message', 'transcript', 'page', 'status', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.get('email', '')
+        && str(request.resource.data.name, 60)
+        && str(request.resource.data.subject, 120) && request.resource.data.subject.size() >= 3
+        && str(request.resource.data.message, 2000) && request.resource.data.message.size() >= 10
+        && request.resource.data.transcript is list && request.resource.data.transcript.size() <= 8
+        && str(request.resource.data.page, 80)
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt is int;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['open', 'in_progress', 'resolved'];
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------- default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

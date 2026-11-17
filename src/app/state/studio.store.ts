@@ -296,7 +296,7 @@ export class StudioStore {
     const copy = this.copy();
     const form = this.form();
     if (!copy) return null;
-    if (this.auth.isSignedIn() && !this.auth.user()?.emailVerified && !this.auth.isDemo() && !this.auth.user()?.providers.includes('google.com')) {
+    if (this.auth.isSignedIn() && !this.auth.user()?.emailVerified && !this.auth.user()?.providers.includes('google.com')) {
       this.toast.warning('Verify your email to save', 'Open the link we emailed you, then try again. You can keep editing meanwhile.');
       return null;
     }
@@ -376,6 +376,6 @@ export class StudioStore {
 export function labelFor(provider: string): string {
   if (provider === 'groq') return 'Groq';
   if (provider === 'gemini') return 'Gemini';
-  if (provider === 'mock') return 'Demo engine';
+  if (provider === 'mock') return 'Offline mock engine';
   return provider;
 }

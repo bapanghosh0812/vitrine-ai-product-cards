@@ -6,12 +6,11 @@ import { getAuth } from 'firebase-admin/auth';
  *
  * firebase-admin is initialised with the project id only. Verifying an ID token needs
  * nothing but Google's public signing keys, so no service account ever lives on the
- * API servers (Vercel / Netlify). The service account is used only by the scheduled
- * demo-reset job in GitHub Actions.
+ * API servers (Vercel / Netlify). The service account is used only by the local
+ * scripts/set-admin-claim.mjs helper, never deployed.
  */
 export interface Caller {
   uid: string;
-  demo: boolean;
   admin: boolean;
   emailVerified: boolean;
 }
@@ -32,7 +31,6 @@ export async function verifyBearer(header: string | undefined, projectId: string
     const decoded = await getAuth(adminApp(projectId)).verifyIdToken(match[1]);
     return {
       uid: decoded.uid,
-      demo: decoded['demo'] === true,
       admin: decoded['admin'] === true,
       emailVerified: decoded.email_verified === true,
     };

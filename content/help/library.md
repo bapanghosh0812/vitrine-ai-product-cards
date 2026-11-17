@@ -16,4 +16,4 @@ Press **Save** in the Studio toolbar. Guests save to this browser; signed-in use
 Star a card to add it to Favourites. Use the search box to find cards by name, title, description or keyword, and filter by category or favourites.
 
 ## Open or delete
-Open a card to continue editing it in the Studio. Delete removes it permanently from the Library (the demo account cannot delete its sample cards).
+Open a card to continue editing it in the Studio. Delete removes it permanently from the Library.

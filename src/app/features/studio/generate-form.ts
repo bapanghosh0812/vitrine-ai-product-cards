@@ -4,6 +4,7 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validatio
 import { RouterLink } from '@angular/router';
 import { CURRENCIES, LANGUAGES, LIMITS, TONES, type CurrencyId, type LanguageId, type ToneId } from '../../../../shared/constants';
 import { BrandKitService } from '../../core/brand-kit.service';
+import { mediaMatches } from '../../core/platform';
 import { StudioStore, type StudioForm } from '../../state/studio.store';
 import { Icon } from '../../shared/ui/icon';
 import { CategoryPicker } from './category-picker';
@@ -267,7 +268,7 @@ export class GenerateForm {
     }
     this.store.patchForm(this.form.getRawValue() as StudioForm);
     const ok = await this.store.generate();
-    if (ok && window.matchMedia('(max-width: 1023px)').matches) {
+    if (ok && mediaMatches('(max-width: 1023px)')) {
       document.getElementById('card-stage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }

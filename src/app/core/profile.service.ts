@@ -56,10 +56,34 @@ export class ProfileService {
     return !c || c.termsVersion !== TERMS_VERSION || c.privacyVersion !== PRIVACY_VERSION;
   });
 
+  private lastSyncedSettings = '';
+  private settingsTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor() {
+    let currentUid: string | null = null;
     effect(() => {
-      const user = this.auth.user();
-      untracked(() => this.listen(user?.uid ?? null));
+      const uid = this.auth.user()?.uid ?? null;
+      if (uid === currentUid) return;
+      currentUid = uid;
+      untracked(() => this.listen(uid));
+    });
+    // Cloud sync of settings for signed-in users (debounced, skipped when nothing changed).
+    effect(() => {
+      const settings = this.settings.settings();
+      const loaded = this._loaded() && !!this._profile();
+      untracked(() => {
+        if (!loaded) return;
+        const json = JSON.stringify(settings);
+        if (json === this.lastSyncedSettings || json === JSON.stringify({ ...settings, ...this._profile()?.settings })) {
+          this.lastSyncedSettings = json;
+          return;
+        }
+        if (this.settingsTimer) clearTimeout(this.settingsTimer);
+        this.settingsTimer = setTimeout(() => {
+          this.lastSyncedSettings = json;
+          void this.saveSettings(settings);
+        }, 1200);
+      });
     });
   }
 
@@ -146,6 +170,16 @@ export class ProfileService {
     } catch {
       /* stats are best effort */
     }
+  }
+
+  /** Removes users/{uid} (cards are deleted separately by CardRepository). */
+  async deleteProfileDoc(): Promise<void> {
+    const uid = this.auth.user()?.uid;
+    if (!uid) return;
+    this.unsub?.();
+    this.unsub = null;
+    const { db, fsMod } = await this.firebase.load();
+    await fsMod.deleteDoc(fsMod.doc(db, 'users', uid));
   }
 
   async saveSettings(settings: AppSettings): Promise<void> {

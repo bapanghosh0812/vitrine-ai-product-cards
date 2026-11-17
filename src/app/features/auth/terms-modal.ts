@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { RouterLink } from '@angular/router';
 import { TERMS_VERSION } from '../../../../shared/constants';
 import { LEGAL_DOCS } from '../../../../shared/content/legal.generated';
+import { fillContentTokens } from '../../core/content-tokens';
 import { Icon } from '../../shared/ui/icon';
 import { RouterContent } from '../../shared/ui/router-content';
 
@@ -37,7 +38,7 @@ import { RouterContent } from '../../shared/ui/router-content';
           </div>
           <div class="scrollbar-thin flex-1 overflow-y-auto px-6 py-6" (scroll)="onScroll($event)" tabindex="0" aria-label="Terms of Service text" data-testid="terms-scroll">
             @if (terms(); as t) {
-              <app-router-content class="prose-vitrine block" [html]="t.html" />
+              <app-router-content class="prose-vitrine block" [html]="html()" />
             } @else {
               <p class="text-muted">The Terms could not be loaded. Read them at <a routerLink="/legal/terms" class="link">/legal/terms</a>.</p>
             }
@@ -62,6 +63,7 @@ export class TermsModal {
   readonly closed = output<void>();
   protected readonly version = TERMS_VERSION;
   protected readonly terms = computed(() => LEGAL_DOCS.find((d) => d.slug === 'terms') ?? null);
+  protected readonly html = computed(() => fillContentTokens(this.terms()?.html ?? ''));
   protected readonly progress = signal(0);
   protected readonly reachedEnd = computed(() => this.progress() >= 99 || !this.terms());
 

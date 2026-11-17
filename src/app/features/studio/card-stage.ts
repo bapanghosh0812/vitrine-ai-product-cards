@@ -55,7 +55,7 @@ const SAMPLES = [
       </ng-template>
 
       <!-- Template switcher -->
-      <div class="no-scrollbar -mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label="Card template">
+      <div class="mt-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Card template">
         @for (t of templates; track t.id) {
           <button
             type="button"

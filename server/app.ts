@@ -40,12 +40,20 @@ export function isAllowedOrigin(origin: string, host: string | undefined, env: S
   return env.allowedOrigins.includes(url.origin);
 }
 
-export function createApp(env: ServerEnv = readEnv()) {
+/** Test seams: lets security tests plug in an adversarial model stream. */
+export interface AppDeps {
+  supportStream?: typeof openSupportStream;
+}
+
+export function createApp(env: ServerEnv = readEnv(), deps: AppDeps = {}) {
+  const supportStream = deps.supportStream ?? openSupportStream;
   const app = new Hono<Env>().basePath('/api');
   const limiter = new RateLimiter();
   const secrets = secretValues(env);
-  const log = (event: string, extra: Record<string, unknown> = {}) =>
-    console.log(JSON.stringify({ level: 'info', event, ...extra, at: new Date().toISOString() }));
+  const quiet = !!process.env['VITEST'];
+  const log = (event: string, extra: Record<string, unknown> = {}) => {
+    if (!quiet) console.log(JSON.stringify({ level: 'info', event, ...extra, at: new Date().toISOString() }));
+  };
 
   const securityHeaders: MiddlewareHandler<Env> = async (c, next) => {
     c.set('requestId', crypto.randomUUID());
@@ -79,7 +87,7 @@ export function createApp(env: ServerEnv = readEnv()) {
     } else if (c.req.method === 'OPTIONS') {
       return c.body(null, 204);
     }
-    await next();
+    return next();
   };
 
   const auth: MiddlewareHandler<Env> = async (c, next) => {
@@ -89,14 +97,14 @@ export function createApp(env: ServerEnv = readEnv()) {
       return c.json(errorBody('invalid_token', 'Your session has expired. Please sign in again.'), 401);
     }
     c.set('caller', caller);
-    await next();
+    return next();
   };
 
   const jsonOnly: MiddlewareHandler<Env> = async (c, next) => {
     if (c.req.method === 'POST' && !(c.req.header('content-type') ?? '').toLowerCase().startsWith('application/json')) {
       return c.json(errorBody('unsupported_media_type', 'Send JSON with Content-Type: application/json.'), 415);
     }
-    await next();
+    return next();
   };
 
   const limited = (c: Context<Env>, result: LimitResult) => {
@@ -228,7 +236,7 @@ export function createApp(env: ServerEnv = readEnv()) {
             send(controller, { t: 'done', actions: ['open-help', 'open-ticket'] });
             return;
           }
-          if (env.aiMock) {
+          if (env.aiMock && !deps.supportStream) {
             const top = results[0]?.chunk;
             send(controller, { t: 'meta', sources, actions: allowedActions as never, provider: 'mock' });
             const text = top
@@ -241,7 +249,7 @@ export function createApp(env: ServerEnv = readEnv()) {
           const system = buildSupportSystem(buildKbContext(results), allowedActions, parsed.data.page);
           let opened;
           try {
-            opened = await openSupportStream(env, system, history as ModelMessage[], {
+            opened = await supportStream(env, system, history as ModelMessage[], {
               deadline: Date.now() + Number(process.env['AI_BUDGET_MS'] ?? 9_000),
               signal: c.req.raw.signal,
               log: (event, extra) => log(event, { ...extra, requestId: c.get('requestId') }),

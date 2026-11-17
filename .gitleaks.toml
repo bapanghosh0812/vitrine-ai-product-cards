@@ -1,0 +1,12 @@
+title = "Vitrine gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated and third-party files"
+paths = [
+  '''package-lock\.json''',
+  '''shared/content/.*\.generated\.ts''',
+  '''public/emoji/.*''',
+]

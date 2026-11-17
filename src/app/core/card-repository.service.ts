@@ -32,11 +32,13 @@ export class CardRepository {
   readonly mode = computed(() => (this.auth.isSignedIn() ? 'cloud' : 'local'));
 
   constructor() {
+    let current: string | null | undefined;
     effect(() => {
       const status = this.auth.status();
       const uid = this.auth.user()?.uid ?? null;
       untracked(() => {
-        if (status === 'unknown') return;
+        if (status === 'unknown' || uid === current) return;
+        current = uid;
         if (uid) void this.listenCloud(uid);
         else this.loadLocal();
       });
@@ -126,7 +128,6 @@ export class CardRepository {
       this.writeLocal(this.guestCards().filter((c) => c.id !== id));
       return;
     }
-    if (this.auth.isDemo()) throw new RepositoryError('The demo account cannot delete cards. They reset every hour.');
     const { db, fsMod } = await this.firebase.load();
     await fsMod.deleteDoc(fsMod.doc(db, 'users', uid, 'cards', id));
   }

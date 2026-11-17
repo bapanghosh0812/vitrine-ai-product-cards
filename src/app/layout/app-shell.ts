@@ -109,7 +109,7 @@ import { ShortcutsService } from './shortcuts.service';
           </div>
 
           <div class="ml-auto flex items-center gap-1.5">
-            <button type="button" class="btn btn-outline btn-sm hidden gap-2 md:inline-flex" (click)="palette.open()" aria-label="Open command palette">
+            <button type="button" class="btn btn-outline btn-sm hidden gap-2 md:inline-flex" (click)="palette.open()">
               <app-icon name="search" [size]="15" />
               <span class="text-muted">Search or jump to…</span>
               <span class="kbd ml-3">{{ mod }}K</span>
@@ -136,9 +136,6 @@ import { ShortcutsService } from './shortcuts.service';
                 <div class="px-3 py-2.5">
                   <p class="truncate text-sm font-semibold text-ink">{{ auth.user()?.displayName || (auth.isSignedIn() ? 'Your account' : 'Guest mode') }}</p>
                   <p class="truncate text-xs text-muted">{{ auth.user()?.email || 'Cards are saved in this browser' }}</p>
-                  @if (auth.isDemo()) {
-                    <span class="chip mt-2 !h-6 !text-[0.7rem]">Demo account · resets hourly</span>
-                  }
                 </div>
                 <div class="divider my-1"></div>
                 @if (auth.isSignedIn()) {
@@ -236,9 +233,7 @@ export default class AppShell {
     return this.auth.isSignedIn() ? 'there' : 'friend';
   });
   protected readonly subline = computed(() =>
-    this.auth.isDemo()
-      ? 'You are exploring the demo account. Changes reset every hour.'
-      : this.auth.isSignedIn()
+    this.auth.isSignedIn()
         ? 'Your cards sync across devices.'
         : 'Guest mode: cards stay in this browser. Sign in to sync.',
   );

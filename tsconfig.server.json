@@ -13,7 +13,11 @@
   "include": [
     "server/**/*.ts",
     "shared/**/*.ts",
-    "netlify/**/*.mts"
+    "netlify/**/*.mts",
+    "tests/**/*.ts",
+    "e2e/**/*.ts",
+    "scripts/**/*.ts",
+    "*.config.ts"
   ],
   "exclude": [
     "server/**/*.spec.ts"

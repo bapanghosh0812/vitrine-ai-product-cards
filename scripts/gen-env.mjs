@@ -38,9 +38,6 @@ const config = {
   siteUrl: env('NG_APP_SITE_URL', 'https://vitrine-ai-product-cards.vercel.app').replace(/\/+$/, ''),
   repoUrl: env('NG_APP_REPO_URL', 'https://github.com/bapanghosh0812/vitrine-ai-product-cards'),
   supportEmail: env('NG_APP_SUPPORT_EMAIL'),
-  demoEmail: env('NG_APP_DEMO_EMAIL', 'demo.vitrine@example.com'),
-  /** Public on purpose: shown in the README so reviewers can sign in. Reset hourly. */
-  demoPassword: env('NG_APP_DEMO_PASSWORD'),
   version: pkg.version,
   commit: commit.slice(0, 7),
   builtAt: new Date().toISOString(),

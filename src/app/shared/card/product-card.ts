@@ -119,7 +119,7 @@ export interface CardPalette {
             <div class="i__head">
               <span class="i__avatar">{{ brandInitial() }}</span>
               <span class="i__brand">{{ brandName() || 'your.brand' }}</span>
-              <span class="i__dots">•••</span>
+              <span class="i__dots" aria-hidden="true">•••</span>
             </div>
             <div class="i__stage">
               <div class="i__ring"></div>

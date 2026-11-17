@@ -46,8 +46,6 @@ if (existsSync(fbFile)) {
   if (next.NG_APP_FIREBASE_PROJECT_ID) next.FIREBASE_PROJECT_ID = next.NG_APP_FIREBASE_PROJECT_ID;
 }
 
-next.NG_APP_DEMO_EMAIL ??= 'demo.vitrine@example.com';
-next.NG_APP_DEMO_PASSWORD ??= 'Kabir#Vitrine-2026!';
 
 const lines = Object.entries(next).map(([k, v]) => `${k}=${/[\s#"'=]/.test(v) ? JSON.stringify(v) : v}`);
 writeFileSync(target, `# Local secrets. Gitignored. Never commit.\n${lines.join('\n')}\n`);

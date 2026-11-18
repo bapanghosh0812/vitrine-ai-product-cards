@@ -49,8 +49,9 @@ jobs:
         run: npm run test:api
       - name: Dependency audit (production, high+)
         run: npm audit --omit=dev --audit-level=high
-      - name: Build (static + prerender)
-        run: npm run build
+      # Same output the hosts serve: prerendered pages plus CSP headers, sitemap and robots.txt.
+      - name: Build (static + prerender + postbuild)
+        run: npm run build:netlify
       - uses: actions/upload-artifact@v4
         with: { name: dist, path: dist/vitrine/browser, retention-days: 3 }
 

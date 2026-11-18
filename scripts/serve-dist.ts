@@ -17,6 +17,8 @@ if (existsSync('.env.local') && !process.env['CI']) Object.assign(process.env, p
 if (process.env['LIVE_AI'] !== '1') process.env['AI_MOCK'] = '1';
 // Never send real email from tests or local previews unless explicitly asked.
 if (process.env['LIVE_MAIL'] !== '1') process.env['MAIL_MOCK'] = '1';
+// Captured mail still needs an inbox address (CI has no SMTP settings at all).
+if (process.env['MAIL_MOCK'] === '1' && !process.env['SUPPORT_INBOX'] && !process.env['SMTP_USER']) process.env['SUPPORT_INBOX'] = 'support@example.test';
 
 const { createApp, normaliseRequest } = await import('../server/app');
 const { readEnv } = await import('../server/env');

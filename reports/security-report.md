@@ -1,6 +1,6 @@
 # Security self-attack report
 
-Run: 2026-11-18T04:14:02.638Z against the production build with production headers (`scripts/security-audit.ts`).
+Run: 2026-11-18T08:54:14.563Z against the production build with production headers (`scripts/security-audit.ts`).
 
 **Result: 13/13 rounds passed.**
 
@@ -39,7 +39,7 @@ Run: 2026-11-18T04:14:02.638Z against the production build with production heade
 
 ### R3. IDOR on Firestore with a second test user
 - Expected: Every cross-user operation denied by security rules
-- Firestore emulator rules suite: 15/15 passed (tests/rules/firestore.rules.spec.ts)
+- Firestore emulator rules suite: 16/16 passed (tests/rules/firestore.rules.spec.ts)
 
 ### R4. Account abuse and privilege escalation
 - Expected: Forged token rejected; role fields and status changes denied by rules
@@ -52,7 +52,7 @@ Run: 2026-11-18T04:14:02.638Z against the production build with production heade
 
 ### R6. Built bundle secret scan
 - Expected: Zero matches (the Firebase web config is public by design and is the only key-like value allowed)
-- scanned 191 files, 4 real secret value(s) checked (AI keys, SMTP app password), matches: 0
+- scanned 192 files, 4 real secret value(s) checked (AI keys, SMTP app password), matches: 0
 - public Firebase web key allow-listed: yes
 
 ### R7. CORS from a foreign origin
@@ -116,6 +116,10 @@ Run: 2026-11-18T04:14:02.638Z against the production build with production heade
 ## Findings fixed during testing
 | Area | Finding | Fix |
 | --- | --- | --- |
+| Prompt structure | User text containing "</product_data>" was copied verbatim into the prompt (JSON does not escape < or >), so it could close the data block early. | All prompt data blocks escape < and > as JSON unicode escapes; covered by a unit test. |
+| Anti-spam | The 3-per-day recipient limit for support confirmations could be dodged with +tags or Gmail dots (all reach one inbox). | Limits key on the real mailbox (tags removed, Gmail dots and googlemail.com normalised); unit test added. |
+| Sign-in | Google sign-in failed on the live site: the service worker re-fetches every GET and the CSP connect-src did not list the Google script origins, so gapi got a synthetic 504. | connect-src now lists apis.google.com, www.gstatic.com and googleusercontent.com; the Google helper loads only on sign-in pages. |
+| Forms | Auth forms without a formGroup did a native submit and reloaded the page; Enter in a Studio field submitted the form. | Forms bound to FormGroups; Enter in single-line fields no longer submits; e2e tests cover both. |
 | Configuration | A stale machine-level GEMINI_API_KEY silently overrode the project key in local runs. | Local scripts now let .env.local win over machine variables; keys verified against the providers' model-list APIs. |
 | AI provider drift | gemini-2.5-flash is no longer offered to new keys and llama-3.3-70b-versatile is gone from Groq. | Defaults moved to gemini-3.1-flash-lite and openai/gpt-oss-20b (still environment-configurable); fallback chain re-verified live. |
 | Dependency audit | 4 high-severity advisories in a transitive gRPC package (@grpc/grpc-js via Firebase). | npm override to @grpc/grpc-js ^1.14.7; production audit now 0 vulnerabilities. |

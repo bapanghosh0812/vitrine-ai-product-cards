@@ -21,7 +21,7 @@ const ng = read<VitestReport>('reports/raw/angular-unit.json');
 const rules = read<VitestReport>('reports/raw/rules.json');
 const e2e = read<{ stats: { expected: number; skipped: number; unexpected: number; flaky: number; startTime: string; duration: number }; suites: unknown[] }>('reports/raw/e2e.json');
 const sec = read<{ ranAt: string; rounds: { id: number; title: string; attack: string; expected: string; observed: string[]; status: string }[] }>('reports/raw/security.json');
-const lh = read<{ ranAt: string; results: { preset: string; path: string; performance: number; accessibility: number; bestPractices: number; seo: number; lcpMs: number; cls: number; tbtMs: number }[] }>('reports/raw/lighthouse.json');
+const lh = read<{ ranAt: string; runsPerPage?: number; results: { preset: string; path: string; performance: number; accessibility: number; bestPractices: number; seo: number; lcpMs: number; cls: number; tbtMs: number }[] }>('reports/raw/lighthouse.json');
 const live = read<{ ranAt: string; generation: { requested: string; status: number; provider: string; model: string; fallbackUsed: boolean; latencyMs: number; title: string | null }[]; jailbreaks: { prompt: string; provider: string; leaked: boolean; answer: string }[] }>('reports/raw/live.json');
 type Cov = { total: Record<'lines' | 'statements' | 'functions' | 'branches', { pct: number; covered: number; total: number }> };
 const covApi = read<Cov>('reports/raw/coverage-api/coverage-summary.json');
@@ -342,6 +342,7 @@ ${kpiBlock}
 <tr><td>Angular unit/component (<code>src/**</code>)</td><td>${pct(covNg, 'statements')}</td><td>${pct(covNg, 'branches')}</td><td>${pct(covNg, 'functions')}</td><td>${pct(covNg, 'lines')}</td></tr></table>
 <p class="small">Angular coverage reflects unit/component tests only; page-level flows are covered by the end-to-end suite, which has no coverage instrumentation.</p>
 <h2>5. Lighthouse</h2>
+<p class="small">Production build served locally with the production headers; Lighthouse 13.6 on Chromium headless shell. Each row is the median of ${lh?.runsPerPage ?? 1} run(s) for that page and preset.</p>
 ${lhTable}
 <h2>6. Accessibility</h2>
 <p>axe-core (tags wcag2a, wcag2aa, wcag21a, wcag21aa) reports <b>0 serious or critical violations</b> on <code>/</code>, <code>/studio</code>, <code>/help</code>, <code>/legal/privacy</code>, <code>/settings</code>, <code>/auth/sign-in</code> and <code>/templates</code> in every executed browser project. Lighthouse accessibility is ${lhMin('accessibility')} on all audited pages. Manual design checks: keyboard navigation and visible focus, skip link, reduced-motion support, large-text option, labelled controls, live regions for toasts and chat.</p>
@@ -354,17 +355,18 @@ ${liveSection}
 <table><tr><th>Project</th><th>Viewport</th><th>Status</th></tr>
 <tr><td>Chromium desktop</td><td>1440 × 900</td><td class="pass">Executed: all tests passed</td></tr>
 <tr><td>Mobile Chrome (Pixel 7 emulation)</td><td>412 × 839, touch</td><td class="pass">Executed: all tests passed</td></tr>
-<tr><td>Firefox desktop</td><td>1440 × 900</td><td class="skip">Configured; runs in CI (Linux). Not executed locally: Windows blocked Playwright's Firefox binary.</td></tr>
-<tr><td>WebKit desktop</td><td>1440 × 900</td><td class="skip">Configured; runs in CI (Linux). Not executed locally: Windows blocked Playwright's WebKit binary.</td></tr>
-<tr><td>Mobile Safari (iPhone 14 emulation)</td><td>390 × 664, touch</td><td class="skip">Configured; runs in CI (Linux). Not executed locally (WebKit).</td></tr></table>
+<tr><td>Firefox desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally: Windows blocked Playwright's Firefox binary.</td></tr>
+<tr><td>WebKit desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally: Windows blocked Playwright's WebKit binary.</td></tr>
+<tr><td>Mobile Safari (iPhone 14 emulation)</td><td>390 × 664, touch</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally (WebKit).</td></tr></table>
 <h3>E2E results by project</h3>
 <table><tr><th>File</th><th>Test</th>${projects.map((p) => `<th>${esc(p ?? '')}</th>`).join('')}</tr>${e2eMatrix.join('')}</table>
 <h2>9. Known issues and unverified items</h2>
 <ul>
 <li><b>Live AI:</b> automated suites use the mock provider for determinism; the real Groq and Gemini integration and live jailbreak resistance were verified separately (section 7). Larger free-tier Gemini models returned temporary "high demand" errors, so the fallback uses gemini-3.1-flash-lite.</li>
 <li><b>Firebase:</b> project created, Email/Password, Email link and Google sign-in enabled, rules deployed. Rules are verified in the emulator; sign-up and sync against the live project are checked manually after deployment.</li>
-<li><b>Deployments pending:</b> Vercel, Netlify and GitHub Pages builds were verified locally (Build Output API bundle, Netlify headers, Pages fallback), not on the hosts.</li>
-<li><b>Firefox/WebKit:</b> run only in CI (see matrix).</li>
+<li><b>Deployments:</b> live on Vercel, Netlify and GitHub Pages. Pages deploys from CI after every check passes; Vercel and Netlify deploy through their Git integrations. Google sign-in works on the three main addresses; per-deployment preview addresses cannot be authorised in Firebase (no wildcards), so the app points users to the main site there.</li>
+<li><b>Firefox/WebKit:</b> verified on GitHub Actions only (see matrix); the per-project table below lists the local runs.</li>
+<li><b>Lighthouse variance:</b> mobile performance moves by 10+ points between runs on the same build (CPU load, thermals, power source). An A/B run of this morning's build against the final build on the same machine gave the same scores, and each page is reported as the median of three runs.</li>
 <li><b>Rate limiting</b> is in-memory per serverless instance (best effort); provider quotas are the outer limit.</li>
 <li><b>Angular unit coverage</b> is ${pct(covNg, 'lines')} of lines; UI flows rely on end-to-end tests.</li>
 </ul>

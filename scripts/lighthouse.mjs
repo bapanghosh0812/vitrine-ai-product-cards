@@ -25,10 +25,15 @@ const npxCli = [join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'n
 if (!npxCli) throw new Error('npx-cli.js not found next to node');
 
 mkdirSync('reports/raw/lighthouse', { recursive: true });
+// Lighthouse scores vary between runs (CPU load, thermals, power source), so each page runs
+// RUNS times and the run with the median performance score is reported, as Lighthouse recommends.
+const RUNS = Math.max(1, Number(process.env.LH_RUNS ?? 3));
 const results = [];
 for (const preset of ['mobile', 'desktop']) {
   for (const path of pages) {
     const out = `reports/raw/lighthouse/${preset}${path === '/' ? '-home' : path.replace(/\//g, '-')}.json`;
+    const runs = [];
+    for (let run = 0; run < RUNS; run++) {
     execFileSync(
       process.execPath,
       [
@@ -46,7 +51,12 @@ for (const preset of ['mobile', 'desktop']) {
       ],
       { stdio: 'inherit', env: { ...process.env, CHROME_PATH: chromePath } },
     );
-    const lhr = JSON.parse(readFileSync(out, 'utf8'));
+      runs.push(readFileSync(out, 'utf8'));
+    }
+    const parsed = runs.map((text) => JSON.parse(text)).sort((a, b) => (a.categories.performance?.score ?? 0) - (b.categories.performance?.score ?? 0));
+    const lhr = parsed[Math.floor(parsed.length / 2)];
+    writeFileSync(out, JSON.stringify(lhr));
+    const allPerf = parsed.map((r) => Math.round((r.categories.performance?.score ?? 0) * 100));
     const score = (k) => Math.round((lhr.categories[k]?.score ?? 0) * 100);
     const row = {
       preset,
@@ -58,10 +68,11 @@ for (const preset of ['mobile', 'desktop']) {
       lcpMs: Math.round(lhr.audits['largest-contentful-paint']?.numericValue ?? 0),
       cls: Number((lhr.audits['cumulative-layout-shift']?.numericValue ?? 0).toFixed(3)),
       tbtMs: Math.round(lhr.audits['total-blocking-time']?.numericValue ?? 0),
+      runs: allPerf,
     };
     results.push(row);
     console.log(JSON.stringify(row));
   }
 }
-writeFileSync('reports/raw/lighthouse.json', JSON.stringify({ ranAt: new Date().toISOString(), base, chrome: chromePath.split(/[\\/]/).at(-1), results }, null, 2));
+writeFileSync('reports/raw/lighthouse.json', JSON.stringify({ ranAt: new Date().toISOString(), base, runsPerPage: RUNS, chrome: chromePath.split(/[\\/]/).at(-1), results }, null, 2));
 console.log('lighthouse: reports/raw/lighthouse.json');

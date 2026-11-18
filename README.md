@@ -9,7 +9,7 @@ Type a product name and a category, get a **title, short description and SEO key
 
 [![CI/CD](https://github.com/bapanghosh0812/vitrine-ai-product-cards/actions/workflows/ci.yml/badge.svg)](https://github.com/bapanghosh0812/vitrine-ai-product-cards/actions/workflows/ci.yml)
 ![Angular](https://img.shields.io/badge/Angular-22-0E4D3A)
-![Lighthouse](https://img.shields.io/badge/Lighthouse-95%E2%80%93100-C9A35B)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-97%E2%80%93100-C9A35B)
 ![License](https://img.shields.io/badge/license-MIT-0E4D3A)
 
 </div>
@@ -168,13 +168,13 @@ All numbers below come from local runs on 18 November 2026 (see the Test Report 
 
 | Suite | Tool | Result |
 | --- | --- | --- |
-| API unit + security tests | Vitest (Node) | **55 / 55 passed** · coverage: 74.0% statements, 77.7% lines, 82.5% functions |
-| Angular unit + component tests | Vitest (jsdom) via `ng test` | **34 / 34 passed** · coverage: 37.3% statements (UI flows are covered by e2e) |
-| Firestore security rules | Firebase emulator + `@firebase/rules-unit-testing` | **15 / 15 passed** (IDOR with a second user, privilege escalation, validation) |
-| End-to-end | Playwright (Chromium desktop + Pixel 7 emulation), AI and email mocked | **63 passed, 1 skipped** (a mobile-only test on desktop) |
+| API unit + security tests | Vitest (Node) | **59 / 59 passed** · coverage: 74.5% statements, 78.5% lines, 83.2% functions |
+| Angular unit + component tests | Vitest (jsdom) via `ng test` | **40 / 40 passed** · coverage: 39.7% statements (UI flows are covered by e2e) |
+| Firestore security rules | Firebase emulator + `@firebase/rules-unit-testing` | **16 / 16 passed** (IDOR with a second user, privilege escalation, validation, tampered card styles) |
+| End-to-end | Playwright (Chromium desktop + Pixel 7 emulation), AI and email mocked | **69 passed, 1 skipped** (a mobile-only test on desktop). On GitHub Actions the same suite also runs on Firefox, WebKit and iPhone 14 and passes. |
 | Accessibility | axe-core (WCAG 2.1 AA) inside e2e | **0 serious/critical violations** on 7 key pages |
-| Lighthouse | Mobile and desktop, 4 pages | **Performance 95–98 mobile, 99–100 desktop · Accessibility, Best Practices and SEO 100 on every page** |
-| Security self-attack | `scripts/security-audit.ts` | **13 / 13 rounds passed** after fixing 10 findings |
+| Lighthouse | Mobile and desktop, 4 pages, median of 3 runs | **Performance 97–100 mobile, 99–100 desktop · Accessibility, Best Practices and SEO 100 on every page** |
+| Security self-attack | `scripts/security-audit.ts` | **13 / 13 rounds passed** after fixing 14 findings |
 | Live AI | `scripts/live-check.mjs` with the real keys | Groq (`gpt-oss-120b`) answered in 1.3 s, Gemini (`gemini-3.1-flash-lite`) in 2.4 s; Ask Kabir on the live model: **0 leaks** across 6 prompts (4 jailbreak or extraction attempts, 1 off-topic request, 1 normal question) |
 | Support email | Manual check with the real Gmail account | A ticket reached the support inbox and the branded confirmation reached the sender |
 

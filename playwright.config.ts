@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 
 /**
  * End-to-end tests run against the production build (dist/) served by scripts/serve-dist.ts,
@@ -13,7 +13,13 @@ export default defineConfig({
   workers: process.env['CI'] ? 2 : 4,
   timeout: 45_000,
   expect: { timeout: 8_000 },
-  reporter: [['list'], ['json', { outputFile: 'reports/raw/e2e.json' }], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
+  reporter: [
+    // On CI, failures also become GitHub annotations (visible on the run page without opening logs).
+    ...(process.env['CI'] ? [['github'] as ReporterDescription] : []),
+    ['list'],
+    ['json', { outputFile: 'reports/raw/e2e.json' }],
+    ['html', { open: 'never', outputFolder: 'playwright-report' }],
+  ],
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',

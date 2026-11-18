@@ -75,12 +75,16 @@ test.describe('App shell', () => {
     await expect(page.locator('#su-terms')).toBeChecked();
   });
 
+  // The auth tests below pass with or without Firebase configured: forks and Dependabot runs
+  // build without the repository's Firebase variables, which disables the submit buttons.
   test('sign-in offers a passwordless email link', async ({ page }) => {
     await page.goto('/auth/sign-in');
     await page.getByTestId('use-link').click();
     await expect(page.getByTestId('send-link')).toBeVisible();
     await expect(page.locator('#password')).toHaveCount(0);
-    await page.getByTestId('send-link').click();
+    const email = page.getByLabel('Email');
+    await email.fill('not-an-email');
+    await email.blur();
     await expect(page.getByText('Please enter a valid email.')).toBeVisible();
     await page.getByRole('button', { name: 'Sign in with a password instead' }).click();
     await expect(page.locator('#password')).toBeVisible();
@@ -88,15 +92,21 @@ test.describe('App shell', () => {
 
   test('forgot password validates the email without reloading the page', async ({ page }) => {
     await page.goto('/auth/forgot-password');
-    await page.getByLabel('Email').fill('not-an-email');
-    await page.getByRole('button', { name: 'Send reset link' }).click();
+    const email = page.getByLabel('Email');
+    await email.fill('not-an-email');
+    // Implicit submission: a native (non-Angular) submit would navigate and clear the field.
+    await email.press('Enter');
+    await email.blur();
     await expect(page.getByText('Please enter a valid email.')).toBeVisible();
     await expect(page).toHaveURL(/\/auth\/forgot-password$/);
+    await expect(email).toHaveValue('not-an-email');
   });
 
   test('a fake email sign-in link is rejected', async ({ page }) => {
     await page.goto('/auth/email-link?mode=signIn&oobCode=not-a-real-code');
-    await expect(page.getByTestId('link-invalid')).toBeVisible();
+    // Rejected as invalid, or (without Firebase) explained that accounts are not configured.
+    const notConfigured = page.getByRole('alert').filter({ hasText: 'Accounts are not configured' });
+    await expect(page.getByTestId('link-invalid').or(notConfigured)).toBeVisible();
   });
 
   test('mobile shows the bottom navigation', async ({ page, isMobile }) => {

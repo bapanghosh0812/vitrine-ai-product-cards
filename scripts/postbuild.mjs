@@ -200,6 +200,16 @@ if (existsSync(ngswPath)) {
   writeFileSync(ngswPath, JSON.stringify(ngsw, null, 2));
 }
 
+// A service worker keeps the CSP it was installed with until its script changes. Stamping the
+// worker with a hash of the CSP makes browsers reinstall it (and pick up the new policy) whenever
+// the policy changes, even when Angular's worker code itself did not.
+const workerPath = join(DIST, 'ngsw-worker.js');
+if (existsSync(workerPath)) {
+  const stamp = `/* vitrine-csp:${createHash('sha256').update(cspHeader).digest('hex').slice(0, 16)} */`;
+  const worker = readFileSync(workerPath, 'utf8').replace(/\n?\/\* vitrine-csp:[0-9a-f]+ \*\/\n?$/, '');
+  writeFileSync(workerPath, `${worker}\n${stamp}\n`);
+}
+
 if (target === 'vercel') {
   const OUT = join('.vercel', 'output');
   rmSync(join(OUT, 'static'), { recursive: true, force: true });

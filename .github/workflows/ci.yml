@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
       - name: Generated content is up to date
@@ -52,7 +52,7 @@ jobs:
       # Same output the hosts serve: prerendered pages plus CSP headers, sitemap and robots.txt.
       - name: Build (static + prerender + postbuild)
         run: npm run build:netlify
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: dist, path: dist/vitrine/browser, retention-days: 3 }
 
   rules:
@@ -60,9 +60,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: '21' }
       - run: npm ci --no-audit --no-fund
       - run: npx -y firebase-tools@latest emulators:exec --only firestore --project demo-vitrine "npx vitest run --config vitest.rules.config.ts"
@@ -84,15 +84,15 @@ jobs:
           - { project: mobile-safari, browser: webkit }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: dist, path: dist/vitrine/browser }
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npx playwright test --project=${{ matrix.project }}
         env: { CI: 'true' }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: 'playwright-report-${{ matrix.project }}', path: playwright-report, retention-days: 7, if-no-files-found: ignore }
 
@@ -117,7 +117,7 @@ jobs:
       - name: Scan the full git history
         run: ./gitleaks git . --config .gitleaks.toml --redact --verbose --exit-code 1 --report-format sarif --report-path gitleaks.sarif
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: { name: gitleaks-results, path: gitleaks.sarif, if-no-files-found: ignore, retention-days: 7 }
 
   # ------------------------------------------------------------------ CD
@@ -133,15 +133,15 @@ jobs:
     environment: { name: github-pages, url: '${{ steps.pages.outputs.page_url }}' }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - name: Build for GitHub Pages (API served by Vercel)
         run: npm run build:pages
         env:
           NG_APP_API_BASE: ${{ vars.NG_APP_API_BASE || 'https://vitrine-ai-product-cards.vercel.app' }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: dist/vitrine/browser }
       - id: pages
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

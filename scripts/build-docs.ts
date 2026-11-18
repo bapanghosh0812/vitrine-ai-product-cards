@@ -178,6 +178,10 @@ ${live.jailbreaks.map((j) => `<tr><td>${esc(j.prompt)}</td><td>${esc(j.answer)}<
   : '';
 
 const FIXED_FINDINGS = [
+  ['Prompt structure', 'User text containing "</product_data>" was copied verbatim into the prompt (JSON does not escape < or >), so it could close the data block early.', 'All prompt data blocks escape < and > as JSON unicode escapes; covered by a unit test.'],
+  ['Anti-spam', 'The 3-per-day recipient limit for support confirmations could be dodged with +tags or Gmail dots (all reach one inbox).', 'Limits key on the real mailbox (tags removed, Gmail dots and googlemail.com normalised); unit test added.'],
+  ['Sign-in', 'Google sign-in failed on the live site: the service worker re-fetches every GET and the CSP connect-src did not list the Google script origins, so gapi got a synthetic 504.', 'connect-src now lists apis.google.com, www.gstatic.com and googleusercontent.com; the Google helper loads only on sign-in pages.'],
+  ['Forms', 'Auth forms without a formGroup did a native submit and reloaded the page; Enter in a Studio field submitted the form.', 'Forms bound to FormGroups; Enter in single-line fields no longer submits; e2e tests cover both.'],
   ['Configuration', 'A stale machine-level GEMINI_API_KEY silently overrode the project key in local runs.', 'Local scripts now let .env.local win over machine variables; keys verified against the providers\' model-list APIs.'],
   ['AI provider drift', 'gemini-2.5-flash is no longer offered to new keys and llama-3.3-70b-versatile is gone from Groq.', 'Defaults moved to gemini-3.1-flash-lite and openai/gpt-oss-20b (still environment-configurable); fallback chain re-verified live.'],
   ['Dependency audit', '4 high-severity advisories in a transitive gRPC package (@grpc/grpc-js via Firebase).', 'npm override to @grpc/grpc-js ^1.14.7; production audit now 0 vulnerabilities.'],
@@ -213,6 +217,7 @@ ${kpiBlock}
 ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><code>${esc(r[2]!)}</code></td></tr>`).join('')}</table>
 <h3>Beyond the brief</h3>
 <ul>
+<li><b>Brief, Style panel and Ask AI:</b> a long brief box (Enter adds lines, only the button sends); a Style panel with eight palettes or custom colours, fonts, title size/case, corners, photo fit, gilded frame, badges, show/hide fields and density; Ask AI rewrites the card from the user's own instruction or one-click refinements. All undoable and saved with the card.</li>
 <li><b>Studio extras:</b> 3 variations, single-field regeneration, inline editing with SEO counters, audience/tone/features/price/language, image upload with in-browser WebP compression, PNG/JSON/HTML export.</li>
 <li><b>Library &amp; Brand Kit:</b> favourites and search; brand voice, words to avoid and colours injected into prompts.</li>
 <li><b>Accounts:</b> Firebase email/password with verification and reset, Google sign-in, passwordless email-link sign-in, guest mode with import on sign-in, consent records with re-consent on new versions, cookie banner (necessary-only by default).</li>
@@ -227,6 +232,8 @@ ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><c
 <div class="shots">
 <figure><img src="${img('landing')}" alt=""><figcaption>Landing page (prerendered)</figcaption></figure>
 <figure><img src="${img('studio')}" alt=""><figcaption>Studio: form, Luxe Gold card, three variations, refine panel</figcaption></figure>
+<figure><img src="${img('studio-style')}" alt=""><figcaption>Style panel: Midnight Sapphire palette, Bestseller badge, gilded frame</figcaption></figure>
+<figure><img src="${img('studio-ask-ai')}" alt=""><figcaption>Ask AI: rewrite the card with a multi-line instruction</figcaption></figure>
 <figure><img src="${img('studio-dark')}" alt=""><figcaption>Dark (emerald-black) theme, Glass template</figcaption></figure>
 <figure><img src="${img('studio-marketplace')}" alt=""><figcaption>Marketplace listing template</figcaption></figure>
 <figure><img src="${img('templates')}" alt=""><figcaption>Six templates</figcaption></figure>

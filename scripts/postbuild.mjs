@@ -102,7 +102,10 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.googleusercontent.com https://www.gstatic.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firebaseinstallations.googleapis.com${apiOrigin ? ` ${apiOrigin}` : ''}`,
+  // The Angular service worker re-fetches every GET the page makes (scripts and images too), and
+  // those fetches are checked against connect-src. Without the Google script/image origins here,
+  // Google sign-in's gapi script and profile photos fail with the worker's synthetic 504.
+  `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firebaseinstallations.googleapis.com https://apis.google.com https://www.gstatic.com https://*.googleusercontent.com${apiOrigin ? ` ${apiOrigin}` : ''}`,
   `frame-src 'self' ${AUTH_DOMAIN ? `https://${AUTH_DOMAIN}` : 'https://*.firebaseapp.com https://*.web.app'} https://accounts.google.com https://apis.google.com`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",

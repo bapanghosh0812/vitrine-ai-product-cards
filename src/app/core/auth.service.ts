@@ -165,6 +165,19 @@ export class AuthService {
     }
   }
 
+  private googleWarm?: Promise<unknown>;
+
+  /**
+   * Loads Google's sign-in helper iframe ahead of the click (only on pages with a Google button),
+   * so the popup opens inside the click's user activation and is not blocked.
+   */
+  warmUpGoogle(): void {
+    if (!this.browser || !this.firebase.enabled) return;
+    this.googleWarm ??= this.sdk()
+      .then(({ auth, authMod }) => authMod.getRedirectResult(auth, authMod.browserPopupRedirectResolver))
+      .catch(() => undefined);
+  }
+
   private static readonly REDIRECT_FLAG = 'vitrine.auth-redirect';
 
   private setRedirectFlag(): void {

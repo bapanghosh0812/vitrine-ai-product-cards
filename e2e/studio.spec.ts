@@ -53,7 +53,7 @@ test.describe('Studio: core flow (assignment requirements)', () => {
     await page.getByRole('button', { name: /More options/ }).click();
     await page.getByRole('radio', { name: '3' }).click();
     await generate(page);
-    await expect(page.getByRole('tab')).toHaveCount(3);
+    await expect(page.getByRole('tablist', { name: 'Variations' }).getByRole('tab')).toHaveCount(3);
     await page.getByRole('tab', { name: 'Variation 3' }).click();
     await expect(page.getByRole('tab', { name: 'Variation 3' })).toHaveAttribute('aria-selected', 'true');
   });
@@ -94,6 +94,62 @@ test.describe('Studio: core flow (assignment requirements)', () => {
     await page.getByTestId('generate').click();
     await expect(page.getByText('Slow down a little')).toBeVisible();
     await expect(page.getByTestId('generate')).toContainText('Try again in');
+  });
+});
+
+test.describe('Studio: brief, Style panel and Ask AI', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/studio');
+    await expect(page.getByRole('heading', { name: 'Describe your product' })).toBeVisible();
+  });
+
+  test('Enter never submits: it adds lines to the brief, and only the button generates', async ({ page }) => {
+    let calls = 0;
+    page.on('request', (r) => r.url().includes('/api/generate') && calls++);
+    await fillProduct(page, 'Handwoven Banarasi silk saree');
+    await page.getByLabel('Product name').press('Enter');
+    const brief = page.getByTestId('brief');
+    await brief.click();
+    await page.keyboard.type('Hand-loomed in Varanasi.');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Stress the pure zari border.');
+    await expect(brief).toHaveValue('Hand-loomed in Varanasi.\nStress the pure zari border.');
+    expect(calls).toBe(0);
+    const request = page.waitForRequest((r) => r.url().includes('/api/generate'));
+    await generate(page);
+    expect((await request).postDataJSON().brief).toBe('Hand-loomed in Varanasi.\nStress the pure zari border.');
+  });
+
+  test('Style panel restyles the card, and every change is undoable', async ({ page }) => {
+    await fillProduct(page, 'Brass and teak table lamp', 'Home & Living');
+    await generate(page);
+    await page.getByTestId('tab-style').click();
+    const card = page.locator('app-product-card');
+    await page.getByTestId('palette-noir').click();
+    await expect(card).toHaveCSS('--brand', '#141414');
+    await page.getByRole('radio', { name: 'Limited edition' }).click();
+    await expect(card.locator('.pc__badge')).toHaveText('Limited edition');
+    await page.getByTestId('show-keywords').uncheck();
+    await expect(card).toHaveClass(/pc--hide-tags/);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(card).not.toHaveClass(/pc--hide-tags/);
+    await page.getByTestId('style-reset').click();
+    await expect(card.locator('.pc__badge')).toHaveCount(0);
+  });
+
+  test('Ask AI rewrites the card from a multi-line instruction sent with the button', async ({ page }) => {
+    await fillProduct(page, 'Brass and teak table lamp', 'Home & Living');
+    await generate(page);
+    await page.getByTestId('tab-ask').click();
+    const input = page.getByTestId('ask-input');
+    await input.click();
+    await page.keyboard.type('Make it more premium.');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Keep the facts.');
+    await expect(input).toHaveValue('Make it more premium.\nKeep the facts.');
+    await page.getByTestId('ask-send').click();
+    await expect(page.getByTestId('product-card')).toContainText('The Brass and teak table lamp');
+    await expect(page.getByText('Applied this session')).toBeVisible();
   });
 });
 

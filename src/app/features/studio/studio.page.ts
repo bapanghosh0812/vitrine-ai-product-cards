@@ -21,8 +21,11 @@ import { GenerateForm } from './generate-form';
       <div class="lg:sticky lg:top-24 lg:self-start">
         <app-generate-form />
       </div>
-      <app-card-stage />
-      <div class="lg:col-span-2 xl:col-span-1 xl:sticky xl:top-24 xl:self-start">
+      <!-- The preview stays in view while the (long) Style panel scrolls. -->
+      <div class="lg:sticky lg:top-24 lg:self-start">
+        <app-card-stage />
+      </div>
+      <div class="lg:col-span-2 xl:col-span-1">
         <app-details-panel />
       </div>
     </div>

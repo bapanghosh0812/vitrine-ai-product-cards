@@ -85,6 +85,23 @@ export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id) as TemplateId[];
 
 export type CopyField = 'title' | 'description' | 'keywords';
 
+/** Curated two-tone palettes for the Style panel: base (backgrounds, accents) and accent (gilt details). */
+export const CARD_PALETTES = [
+  { id: 'emerald', label: 'Emerald & Gold', base: '#0e4d3a', accent: '#d6b672' },
+  { id: 'sapphire', label: 'Midnight Sapphire', base: '#14213d', accent: '#e5c07b' },
+  { id: 'bordeaux', label: 'Bordeaux', base: '#5b1a2b', accent: '#e3c08d' },
+  { id: 'noir', label: 'Noir', base: '#141414', accent: '#d4af37' },
+  { id: 'rose', label: 'Rose Gold', base: '#7a3e48', accent: '#f1c6b3' },
+  { id: 'plum', label: 'Royal Plum', base: '#3b1f4a', accent: '#dcb871' },
+  { id: 'teal', label: 'Ocean Teal', base: '#0f4c5c', accent: '#f2d7a6' },
+  { id: 'terracotta', label: 'Terracotta', base: '#8a3b24', accent: '#f3d2a2' },
+] as const;
+
+export const BADGE_PRESETS = ['New', 'Bestseller', 'Limited edition', 'Handmade', 'Eco-friendly', 'Gift ready'] as const;
+
+/** Bounds for the Style panel (also enforced when a saved card is loaded). */
+export const STYLE_LIMITS = { badgeMax: 24, linesMin: 2, linesMax: 6, keywordsMin: 0, keywordsMax: 8 } as const;
+
 /** Hard limits shared by client validation and server zod schemas. */
 export const LIMITS = {
   nameMin: 2,
@@ -105,6 +122,8 @@ export const LIMITS = {
   keywordsMin: 4,
   keywordsMax: 10,
   keywordMax: 32,
+  briefMax: 1500,
+  instructionMax: 600,
   supportMessageMax: 600,
   supportHistoryMax: 8,
   ticketSubjectMax: 120,

@@ -1,14 +1,22 @@
 version: 2
 updates:
+  # One grouped pull request per month for minor/patch updates, a separate one for majors.
   - package-ecosystem: npm
     directory: /
-    schedule: { interval: weekly, day: monday }
-    open-pull-requests-limit: 5
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 3
     groups:
-      angular:
-        patterns: ['@angular/*', '@angular-devkit/*', 'angular-eslint']
-      ai-sdk:
-        patterns: ['ai', '@ai-sdk/*']
+      minor-and-patch:
+        update-types: [minor, patch]
+      major:
+        update-types: [major]
+    ignore:
+      # Node type definitions must match the Node runtime major (24), not the newest one.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: weekly, day: monday }
+    schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ['*']

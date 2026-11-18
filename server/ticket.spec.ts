@@ -100,6 +100,15 @@ describe('POST /api/support/ticket', () => {
     expect(statuses).toEqual([200, 200, 200, 429]);
   });
 
+  it('counts +tags and Gmail dots as the same mailbox for the recipient limit', async () => {
+    const { mailer } = capture();
+    const app = createApp(env, { mailer });
+    const variants = ['vic.tim@gmail.com', 'victim+a@gmail.com', 'v.i.c.t.i.m+b@googlemail.com', 'VICTIM@gmail.com'];
+    const statuses = [];
+    for (const [i, email] of variants.entries()) statuses.push((await post(app, ticket({ email }), `203.0.113.${80 + i}`)).status);
+    expect(statuses).toEqual([200, 200, 200, 429]);
+  });
+
   it('returns 503 when mail is not configured and 502 when the inbox cannot be reached', async () => {
     expect((await post(createApp(env, { mailer: null }), ticket())).status).toBe(503);
     const { mailer } = capture('inbox');

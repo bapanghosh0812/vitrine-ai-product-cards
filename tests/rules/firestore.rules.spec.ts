@@ -120,6 +120,15 @@ describe('users/{uid}/cards (owner only, validated)', () => {
     await assertFails(setDoc(doc(alice(), 'users/alice/cards/c6'), card({ extra: 'field' })));
     await assertSucceeds(setDoc(doc(alice(), 'users/alice/cards/c7'), card({ image: 'data:image/webp;base64,QUJDRA==' })));
   });
+  it('accepts Style panel options and rejects tampered ones', async () => {
+    const style = { palette: 'custom', base: '#14213d', accent: '#e5c07b', font: 'serif', badge: 'Bestseller', frame: true, lines: 3, keywords: 4 };
+    await assertSucceeds(setDoc(doc(alice(), 'users/alice/cards/s1'), card({ style, inputs: { tone: 'luxurious', brief: 'Hand-loomed in Varanasi.' } })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/cards/s2'), card({ style: { base: 'red;background:url(x)' } })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/cards/s3'), card({ style: { badge: 'x'.repeat(25) } })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/cards/s4'), card({ style: { lines: 40 } })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/cards/s5'), card({ style: { script: 'alert(1)' } })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/cards/s6'), card({ inputs: { brief: 'x'.repeat(1501) } })));
+  });
 });
 
 describe('tickets', () => {

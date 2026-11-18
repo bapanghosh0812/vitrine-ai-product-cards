@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ApplicationRef, ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ConsentGate } from './features/auth/consent-gate';
 import { GuestImport } from './features/auth/guest-import';
 import { AskKabir } from './features/support/ask-kabir';
 import { CommandPalette } from './layout/command-palette';
 import { CookieBanner } from './layout/cookie-banner';
+import { injectIsBrowser } from './core/platform';
 import { ToastOutlet } from './shared/ui/toast-outlet';
 
 @Component({
@@ -26,4 +27,13 @@ import { ToastOutlet } from './shared/ui/toast-outlet';
     }
   `,
 })
-export class App {}
+export class App {
+  constructor() {
+    // Marks the page as interactive once hydration settles (used by e2e tests and diagnostics).
+    if (injectIsBrowser()) {
+      void inject(ApplicationRef)
+        .whenStable()
+        .then(() => document.documentElement.setAttribute('data-ready', ''));
+    }
+  }
+}

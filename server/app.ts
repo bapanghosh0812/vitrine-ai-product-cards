@@ -8,7 +8,7 @@ import { AiUnavailableError, aiConfigured, generateCopy, openSupportStream } fro
 import { verifyBearer, type Caller } from './lib/auth';
 import { actionsFor, buildKbContext, searchArticles, searchChunks } from './lib/kb';
 import { buildSupportSystem } from './lib/prompts';
-import { RateLimiter, RULES, type LimitResult } from './lib/rate-limit';
+import { mailboxKey, RateLimiter, RULES, type LimitResult } from './lib/rate-limit';
 import { looksLikePromptLeak, StreamRedactor } from './lib/redact';
 import { cleanMultiline } from './lib/sanitize';
 import { generateRequestSchema, supportRequestSchema, ticketRequestSchema } from './lib/schemas';
@@ -354,7 +354,7 @@ export function createApp(env: ServerEnv = readEnv(), deps: AppDeps = {}) {
     const email = (caller?.email ?? t.email ?? '').toLowerCase();
     if (!email) return c.json(errorBody('invalid_input', 'Please enter your email so we can reply.'), 422);
 
-    const recipient = limiter.check(`tk:to:${email}`, RULES.ticketRecipientDay);
+    const recipient = limiter.check(`tk:to:${mailboxKey(email)}`, RULES.ticketRecipientDay);
     if (!recipient.ok) return limited(c, recipient);
 
     if (!mailer || !env.supportInbox) {

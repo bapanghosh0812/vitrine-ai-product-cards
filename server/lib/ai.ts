@@ -113,7 +113,7 @@ export async function generateCopy(env: ServerEnv, input: GenerateInput, opts: C
   const chain = candidates(env, input.provider ?? 'auto');
   if (!chain.length) throw new AiUnavailableError('No AI provider is configured on the server.');
 
-  const count = input.field ? 1 : (input.variations ?? 1);
+  const count = input.field || input.instruction ? 1 : (input.variations ?? 1);
   const schema = schemaFor(input.field, count);
   const prompt = buildGeneratePrompt(input);
   let attempt = 0;
@@ -191,9 +191,24 @@ const MOCK_ANGLES = [
   { lead: 'Designed to turn heads', mood: 'bold in character yet effortless to live with' },
 ];
 
+/** Deterministic stand-in for an AI revision, so tests can check the refine flow end to end. */
+function mockRevise(current: ProductCopy, instruction: string): ProductCopy {
+  const ask = instruction.toLowerCase();
+  let { title, description } = current;
+  if (/short|concise|crisp|brief/.test(ask)) {
+    const first = description.split(/(?<=[.!?])\s+/)[0] ?? description;
+    description = first.length >= 60 ? first : clampWords(description, Math.max(60, Math.round(description.length * 0.7)));
+  }
+  else if (/long|detail|more about/.test(ask)) description = `${description} Made to be noticed, and kept for years.`;
+  if (/luxur|premium|elegant|exclusive/.test(ask) && !title.startsWith('The ')) title = `The ${title}`;
+  if (/urgen|limited|hurry|today/.test(ask)) description = `${description} Limited stock, so order soon.`;
+  if (title === current.title && description === current.description) description = `${description} Thoughtfully refined for you.`;
+  return { ...current, title, description };
+}
+
 export function mockGenerate(input: GenerateInput, started = Date.now()): GenerateResponse {
   const category = CATEGORIES.find((c) => c.id === input.category)?.label ?? 'Product';
-  const count = input.field ? 1 : (input.variations ?? 1);
+  const count = input.field || input.instruction ? 1 : (input.variations ?? 1);
   const variations: ProductCopy[] = [];
   for (let i = 0; i < count; i++) {
     const angle = MOCK_ANGLES[i % MOCK_ANGLES.length]!;
@@ -208,6 +223,10 @@ export function mockGenerate(input: GenerateInput, started = Date.now()): Genera
       input,
     );
     if (card) variations.push(card);
+  }
+  if (input.instruction && input.current) {
+    const revised = finaliseCopy(mockRevise(input.current, input.instruction), input);
+    return { variations: [revised ?? input.current], provider: 'mock', model: 'mock-1', latencyMs: Date.now() - started, fallbackUsed: false };
   }
   if (input.field && input.current) {
     const base = { ...input.current };

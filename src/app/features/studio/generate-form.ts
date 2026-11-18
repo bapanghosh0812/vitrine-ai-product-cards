@@ -27,7 +27,7 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
   imports: [ReactiveFormsModule, CategoryPicker, Icon, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="surface p-5 md:p-6" aria-labelledby="form-title">
+    <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" novalidate class="surface p-5 md:p-6" aria-labelledby="form-title">
       <div class="flex items-center justify-between">
         <div>
           <p class="eyebrow">Step 1</p>
@@ -72,6 +72,28 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
           @if (showError('category')) {
             <p id="category-error" class="field-error" role="alert"><app-icon name="warning" [size]="14" /> Please choose a category.</p>
           }
+        </div>
+
+        <div>
+          <div class="flex items-end justify-between">
+            <label for="brief" class="field-label">Your brief <span class="font-normal text-muted">(optional)</span></label>
+            <span class="field-hint tabular-nums" [class.text-gilt]="briefLength() > limits.briefMax * 0.9">{{ briefLength() }}/{{ limits.briefMax }}</span>
+          </div>
+          <div class="brief">
+            <app-icon name="wand" [size]="16" class="brief__icon text-gilt" />
+            <textarea
+              id="brief"
+              class="field brief__input"
+              formControlName="brief"
+              rows="4"
+              [readOnly]="!browser"
+              [attr.maxlength]="limits.briefMax"
+              placeholder="Tell Kabir everything: the story, materials, who it is for, what to highlight, words to use or avoid…"
+              aria-describedby="brief-hint"
+              data-testid="brief"
+            ></textarea>
+          </div>
+          <p id="brief-hint" class="field-hint">Write as much as you like. <span class="kbd">Enter</span> adds a new line; only the Generate button sends.</p>
         </div>
 
         <button
@@ -191,6 +213,26 @@ function featuresValidator(control: AbstractControl<string>): ValidationErrors |
       </div>
     </form>
   `,
+  styles: `
+    .brief {
+      position: relative;
+    }
+    .brief__icon {
+      position: absolute;
+      top: 0.95rem;
+      left: 0.9rem;
+      pointer-events: none;
+    }
+    .brief__input {
+      padding-left: 2.5rem;
+      min-height: 7.5rem;
+      max-height: 22rem;
+      resize: vertical;
+      field-sizing: content;
+      line-height: 1.55;
+      background-image: linear-gradient(180deg, color-mix(in oklab, var(--gilt) 6%, transparent), transparent 3.5rem);
+    }
+  `,
 })
 export class GenerateForm {
   protected readonly store = inject(StudioStore);
@@ -214,6 +256,7 @@ export class GenerateForm {
     audience: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(LIMITS.audienceMax)] }),
     tone: new FormControl<ToneId>('luxurious', { nonNullable: true }),
     features: new FormControl('', { nonNullable: true, validators: [featuresValidator] }),
+    brief: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(LIMITS.briefMax)] }),
     price: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^\d{1,9}(\.\d{1,2})?$/)] }),
     currency: new FormControl<CurrencyId>('INR', { nonNullable: true }),
     language: new FormControl<LanguageId>('en', { nonNullable: true }),
@@ -222,6 +265,7 @@ export class GenerateForm {
 
   private readonly value = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
   protected readonly nameLength = computed(() => (this.value().name ?? '').length);
+  protected readonly briefLength = computed(() => (this.value().brief ?? '').length);
   protected readonly optionsSummary = computed(() => {
     const v = this.value();
     const tone = TONES.find((t) => t.id === v.tone)?.label ?? '';
@@ -244,6 +288,12 @@ export class GenerateForm {
     // Tick the cooldown label
     const timer = setInterval(() => this.now.set(Date.now()), 1000);
     this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
+  /** Enter in a single-line field must not submit the form; only the button (or Ctrl/Cmd+Enter) does. */
+  protected onEnter(event: Event): void {
+    const e = event as KeyboardEvent;
+    if ((e.target as HTMLElement).tagName === 'INPUT' && !e.ctrlKey && !e.metaKey) e.preventDefault();
   }
 
   protected showError(name: keyof typeof this.form.controls): boolean {

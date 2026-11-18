@@ -30,7 +30,7 @@ jobs:
     name: Lint, typecheck, unit tests, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
@@ -59,7 +59,7 @@ jobs:
     name: Firestore rules tests (emulator)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - uses: actions/setup-java@v4
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
@@ -92,7 +92,7 @@ jobs:
     env:
       GITLEAKS_VERSION: 8.28.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       # The CLI scans the whole history on every run. (gitleaks-action builds a "<first>^..<last>"
       # range from the push payload, which breaks on a repository's first push.)
@@ -110,68 +110,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with: { name: gitleaks-results, path: gitleaks.sarif, if-no-files-found: ignore, retention-days: 7 }
 
-  # ------------------------------------------------------------------ CD (gated on CI)
-  deploy-vercel:
-    name: Deploy to Vercel
-    needs: [quality, rules, e2e, gitleaks]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions: { contents: read, pull-requests: write }
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    outputs:
-      url: ${{ steps.deploy.outputs.url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
-      - name: Skip when Vercel is not configured
-        id: check
-        run: echo "enabled=${{ env.VERCEL_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
-      - if: steps.check.outputs.enabled == 'true'
-        run: npm ci --no-audit --no-fund && npm i -g vercel@latest
-      - if: steps.check.outputs.enabled == 'true'
-        run: vercel pull --yes --environment=${{ github.event_name == 'pull_request' && 'preview' || 'production' }} --token="$VERCEL_TOKEN"
-      - if: steps.check.outputs.enabled == 'true'
-        run: npm run build:vercel
-      - if: steps.check.outputs.enabled == 'true'
-        id: deploy
-        run: |
-          url=$(vercel deploy --prebuilt ${{ github.event_name != 'pull_request' && '--prod' || '' }} --token="$VERCEL_TOKEN")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Vercel: $url" >> "$GITHUB_STEP_SUMMARY"
-
-  deploy-netlify:
-    name: Deploy to Netlify
-    needs: [quality, rules, e2e, gitleaks]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    env:
-      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-    outputs:
-      url: ${{ steps.deploy.outputs.url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
-      - name: Skip when Netlify is not configured
-        id: check
-        run: echo "enabled=${{ env.NETLIFY_AUTH_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
-      - if: steps.check.outputs.enabled == 'true'
-        run: npm ci --no-audit --no-fund
-      - if: steps.check.outputs.enabled == 'true'
-        run: npm run build:netlify
-      - if: steps.check.outputs.enabled == 'true'
-        id: deploy
-        run: |
-          out=$(npx -y netlify-cli@latest deploy --dir=dist/vitrine/browser --functions=netlify/functions ${{ github.event_name != 'pull_request' && '--prod' || '--alias=pr-${{ github.event.number }}' }} --message="${{ github.sha }}" --json)
-          url=$(echo "$out" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);console.log(j.deploy_url||j.url)})")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Netlify: $url" >> "$GITHUB_STEP_SUMMARY"
-
+  # ------------------------------------------------------------------ CD
+  # GitHub Pages deploys from here, only after every check above passes.
+  # Vercel and Netlify deploy through their Git integrations: production on every push to main
+  # and a preview URL on every pull request (shown in the PR's checks and deployments).
   deploy-pages:
     name: Deploy to GitHub Pages
     needs: [quality, rules, e2e, gitleaks]
@@ -180,7 +122,7 @@ jobs:
     permissions: { contents: read, pages: write, id-token: write }
     environment: { name: github-pages, url: '${{ steps.pages.outputs.page_url }}' }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
@@ -193,23 +135,3 @@ jobs:
         with: { path: dist/vitrine/browser }
       - id: pages
         uses: actions/deploy-pages@v4
-
-  preview-comment:
-    name: Post preview links
-    needs: [deploy-vercel, deploy-netlify]
-    if: github.event_name == 'pull_request' && (needs.deploy-vercel.outputs.url != '' || needs.deploy-netlify.outputs.url != '')
-    runs-on: ubuntu-latest
-    permissions: { pull-requests: write }
-    steps:
-      - uses: actions/github-script@v7
-        env:
-          VERCEL_URL: ${{ needs.deploy-vercel.outputs.url }}
-          NETLIFY_URL: ${{ needs.deploy-netlify.outputs.url }}
-        with:
-          script: |
-            const marker = '<!-- vitrine-preview -->';
-            const body = `${marker}\n### Preview deployments\n| Host | URL |\n| --- | --- |\n| Vercel | ${process.env.VERCEL_URL || 'not configured'} |\n| Netlify | ${process.env.NETLIFY_URL || 'not configured'} |\n\nCommit ${context.sha.slice(0, 7)}`;
-            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: context.issue.number });
-            const existing = comments.find((c) => c.body?.includes(marker));
-            if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
-            else await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });

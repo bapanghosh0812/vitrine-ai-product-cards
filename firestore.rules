@@ -70,13 +70,30 @@ service cloud.firestore {
         && str(c.description, 400)
         && c.keywords is list && c.keywords.size() <= 10;
     }
+    function hexColour(v) {
+      return v is string && v.matches('^#[0-9a-fA-F]{6}$');
+    }
+    // Style panel options: known keys only, colours must be hex, badge text is short.
+    function validStyle(s) {
+      return s is map
+        && s.keys().hasOnly(['palette', 'base', 'accent', 'font', 'titleCase', 'titleSize', 'radius', 'imageFit', 'frame',
+                             'badge', 'hideCategory', 'hideDescription', 'hideKeywords', 'hidePrice', 'lines', 'keywords'])
+        && optStr(s, 'palette', 16)
+        && (!('base' in s) || hexColour(s.base))
+        && (!('accent' in s) || hexColour(s.accent))
+        && optStr(s, 'badge', 24)
+        && (!('lines' in s) || (s.lines is int && s.lines >= 2 && s.lines <= 6))
+        && (!('keywords' in s) || (s.keywords is int && s.keywords >= 0 && s.keywords <= 8));
+    }
     function validCard(d) {
-      return d.keys().hasOnly(['name', 'category', 'template', 'copy', 'inputs', 'image', 'favourite', 'createdAt', 'updatedAt', 'provider'])
+      return d.keys().hasOnly(['name', 'category', 'template', 'copy', 'inputs', 'image', 'style', 'favourite', 'createdAt', 'updatedAt', 'provider'])
         && str(d.name, 80)
         && str(d.category, 20)
         && d.template in ['minimal', 'luxe', 'glass', 'bold', 'instagram', 'marketplace']
         && validCopy(d.copy)
         && d.inputs is map && d.inputs.size() <= 8
+        && optStr(d.inputs, 'brief', 1500)
+        && (!('style' in d) || validStyle(d.style))
         && (!('image' in d) || d.image == null
             || (d.image is string && d.image.size() <= 420000 && d.image.matches('^data:image/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$')))
         && d.favourite is bool

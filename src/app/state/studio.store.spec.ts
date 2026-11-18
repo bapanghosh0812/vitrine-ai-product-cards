@@ -91,6 +91,34 @@ describe('StudioStore', () => {
     expect(store.copy()?.description).toContain('brand new');
   });
 
+  it('sends the long brief and refines the card from an instruction', async () => {
+    store.patchForm({ brief: '  Hand-loomed in Varanasi.\nStress the zari border.  ' });
+    await store.generate();
+    expect(calls[0]?.brief).toBe('Hand-loomed in Varanasi.\nStress the zari border.');
+    next = async () => response(1, 'Refined');
+    expect(await store.refine('Make it shorter')).toBe(true);
+    expect(calls.at(-1)).toMatchObject({ instruction: 'Make it shorter', variations: 1, current: { title: 'Card 1' } });
+    expect(store.copy()?.title).toBe('Refined 1');
+    expect(store.refineLog()).toEqual(['Make it shorter']);
+    store.undo();
+    expect(store.copy()?.title).toBe('Card 1');
+    expect(await store.refine('x')).toBe(false);
+  });
+
+  it('style changes are cleaned, undoable and resettable', async () => {
+    await store.generate();
+    store.setStyle({ palette: 'noir', badge: 'Bestseller' });
+    store.setStyle({ base: 'javascript:alert(1)' } as never);
+    expect(store.style()).toEqual({ palette: 'noir', badge: 'Bestseller' });
+    store.setStyle({ frame: true });
+    store.undo();
+    expect(store.style().frame).toBeUndefined();
+    store.resetStyle();
+    expect(store.style()).toEqual({});
+    store.undo();
+    expect(store.style().palette).toBe('noir');
+  });
+
   it('sanitises keyword edits (dedupe, lowercase, max 10)', async () => {
     await store.generate();
     store.setKeywords(['Silk', 'silk', 'X', ...Array.from({ length: 15 }, (_, i) => `kw${i}`)]);

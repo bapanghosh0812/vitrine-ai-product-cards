@@ -1,7 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CATEGORIES, type TemplateId } from '../../../../shared/constants';
-import type { ProductCopy } from '../../../../shared/types';
+import type { CardStyle, ProductCopy } from '../../../../shared/types';
+import { styleClasses, styleColours, TITLE_SCALE } from './card-style';
 
 export interface CardPalette {
   base: string;
@@ -18,9 +19,11 @@ export interface CardPalette {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './product-card.css',
   host: {
-    '[class]': '"pc pc--" + template()',
+    '[class]': '"pc pc--" + template() + extraClasses()',
     '[style.--brand]': 'palette().base',
     '[style.--brand-accent]': 'palette().accent',
+    '[style.--pc-title]': 'titleScale()',
+    '[style.--pc-lines]': 'cardStyle()?.lines ?? null',
     role: 'article',
     '[attr.aria-label]': 'copy().title + " product card"',
   },
@@ -40,7 +43,7 @@ export interface CardPalette {
             <h3 class="m__title">{{ copy().title }}</h3>
             <p class="m__desc">{{ copy().description }}</p>
             <ul class="m__tags">
-              @for (k of copy().keywords.slice(0, 6); track k) {
+              @for (k of kw(6); track k) {
                 <li>{{ k }}</li>
               }
             </ul>
@@ -62,7 +65,7 @@ export interface CardPalette {
             <h3 class="l__title">{{ copy().title }}</h3>
             <p class="l__desc">{{ copy().description }}</p>
             <ul class="l__tags">
-              @for (k of copy().keywords.slice(0, 5); track k) {
+              @for (k of kw(5); track k) {
                 <li>{{ k }}</li>
               }
             </ul>
@@ -83,7 +86,7 @@ export interface CardPalette {
               <h3 class="g__title">{{ copy().title }}</h3>
               <p class="g__desc">{{ copy().description }}</p>
               <ul class="g__tags">
-                @for (k of copy().keywords.slice(0, 5); track k) {
+                @for (k of kw(5); track k) {
                   <li>{{ k }}</li>
                 }
               </ul>
@@ -102,7 +105,7 @@ export interface CardPalette {
             <div class="b__media"><ng-container *ngTemplateOutlet="media" /></div>
             <p class="b__desc">{{ copy().description }}</p>
             <ul class="b__tags">
-              @for (k of copy().keywords.slice(0, 4); track k) {
+              @for (k of kw(4); track k) {
                 <li>{{ k }}</li>
               }
             </ul>
@@ -132,7 +135,7 @@ export interface CardPalette {
               <h3 class="i__title">{{ copy().title }}</h3>
               <p class="i__desc">{{ copy().description }}</p>
               <p class="i__tags">
-                @for (k of copy().keywords.slice(0, 6); track k) {
+                @for (k of kw(6); track k) {
                   <span>#{{ hashtag(k) }}</span>
                 }
               </p>
@@ -151,7 +154,7 @@ export interface CardPalette {
               }
               <p class="mk__desc">{{ copy().description }}</p>
               <ul class="mk__tags">
-                @for (k of copy().keywords.slice(0, 6); track k) {
+                @for (k of kw(6); track k) {
                   <li>{{ k }}</li>
                 }
               </ul>
@@ -163,6 +166,9 @@ export interface CardPalette {
             </div>
           </div>
         }
+      }
+      @if (badge()) {
+        <span class="pc__badge">{{ badge() }}</span>
       }
     </div>
 
@@ -191,15 +197,31 @@ export class ProductCard {
   readonly brandName = input<string | undefined>(undefined);
   readonly brandColours = input<string[] | undefined>(undefined);
   readonly watermark = input(true);
+  /** Options from the Style panel (colours, type, layout, badge, visibility). */
+  readonly cardStyle = input<CardStyle | null>(null);
+
+  protected readonly extraClasses = computed(() => styleClasses(this.cardStyle()));
+  protected readonly titleScale = computed(() => {
+    const size = this.cardStyle()?.titleSize;
+    return size ? String(TITLE_SCALE[size]) : null;
+  });
+  protected readonly badge = computed(() => this.cardStyle()?.badge ?? '');
 
   protected readonly categoryDef = computed(() => CATEGORIES.find((c) => c.id === this.category()) ?? CATEGORIES[CATEGORIES.length - 1]!);
   protected readonly categoryLabel = computed(() => this.categoryDef().label);
   protected readonly emoji = computed(() => this.categoryDef().emoji);
   protected readonly brandInitial = computed(() => (this.brandName()?.trim()[0] ?? 'V').toUpperCase());
   protected readonly palette = computed<CardPalette>(() => {
+    const chosen = styleColours(this.cardStyle());
+    if (chosen) return chosen;
     const [base, accent] = this.brandColours() ?? [];
     return { base: base ?? '', accent: accent ?? '' };
   });
+
+  /** Keywords to show: the template's default count unless the Style panel set one. */
+  protected kw(defaultCount: number): string[] {
+    return this.copy().keywords.slice(0, this.cardStyle()?.keywords ?? defaultCount);
+  }
   protected readonly priceLabel = computed(() => {
     const raw = this.price();
     if (!raw) return '';

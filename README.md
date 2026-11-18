@@ -43,7 +43,9 @@ Type a product name and a category, get a **title, short description and SEO key
 | README with design choices and AI usage | This file, plus `docs/adr/` |
 
 ## Features
-- **Studio:** 1 or 3 variations, regenerate a single field, inline editing with SEO character counters, undo/redo, audience/tone/features/price/language options, 8 languages.
+- **Studio:** a long **brief** box (up to 1,500 characters, Enter adds lines, only the button sends), 1 or 3 variations, regenerate a single field, inline editing with SEO character counters, undo/redo, audience/tone/features/price/language options, 8 languages.
+- **Style panel:** eight luxury two-tone palettes or custom colours, serif/sans titles in three sizes, Title Case or UPPERCASE, sharp/soft/round corners, photo fill or fit, a gilded frame, badges (Bestseller, Limited edition, your own text), show/hide category, description, keywords and price, and keyword/line density. All undoable, saved with the card and used in exports.
+- **Ask AI:** rewrite the card in your own words ("warmer, shorter, mention free shipping") or with one-click refinements (Shorter, More luxurious, Warmer, Playful, Add urgency, SEO boost, Simpler words, Gift angle).
 - **Six templates:** Minimal, Luxe Gold, Glass, Bold, Instagram post, Marketplace listing. Upload a photo (compressed in the browser) or use a 3D category icon.
 - **Export:** PNG (1x/2x/3x), JSON, safe HTML snippet, copy text.
 - **Library:** favourites, search and category filter. Guests save locally; accounts sync through Firestore.
@@ -64,6 +66,8 @@ Type a product name and a category, get a **title, short description and SEO key
 | ![Studio with a Luxe Gold card and three variations](docs/screenshots/studio.webp) | ![Studio in the emerald-black dark theme with the Glass template](docs/screenshots/studio-dark.webp) |
 | **Landing** | **Templates** |
 | ![Landing page with Kabir and floating product cards](docs/screenshots/landing.webp) | ![Six card templates](docs/screenshots/templates.webp) |
+| **Style panel** (Midnight Sapphire, Bestseller badge, gilded frame) | **Ask AI** (rewrite in your own words) |
+| ![Style panel with luxury palettes, typography, layout, badge and visibility options](docs/screenshots/studio-style.webp) | ![Ask AI tab with a multi-line instruction and quick refinements](docs/screenshots/studio-ask-ai.webp) |
 | **Ask Kabir** | **Scroll-to-accept Terms** |
 | ![Ask Kabir answering from the Help Center with sources](docs/screenshots/ask-kabir.webp) | ![Terms of Service dialog with a reading progress bar](docs/screenshots/terms-consent.webp) |
 
@@ -136,9 +140,9 @@ Without Firebase values the app runs in guest mode only. Other useful scripts: `
 
 ## How AI is used
 **In the product**
-- **What:** generating a product title (≤ 60 characters target), a 2–3 sentence description (≈ 140–220 characters) and 4–10 SEO keywords; regenerating one field; three variations; answering support questions in Ask Kabir.
+- **What:** generating a product title (≤ 60 characters target), a 2–3 sentence description (≈ 140–220 characters) and 4–10 SEO keywords from the form and an optional long brief; regenerating one field; three variations; rewriting a card from the user's own instruction (Ask AI); answering support questions in Ask Kabir.
 - **Models:** Groq is the primary provider (`openai/gpt-oss-120b` by default, `openai/gpt-oss-20b` as a second Groq model) and Google **Gemini Flash** (`gemini-3.1-flash-lite` by default) is the automatic fallback. Model IDs are environment variables. The UI shows which provider answered.
-- **Prompts:** a fixed system prompt defines copy rules (length, tone, plain text, no unverifiable claims). User input is serialised as JSON inside a `<product_data>` block and the model is told to treat it as data only (`server/lib/prompts.ts`). Brand Kit values and options are added as structured fields.
+- **Prompts:** a fixed system prompt defines copy rules (length, tone, plain text, no unverifiable claims). User input (including the brief and Ask AI instructions) is serialised as JSON inside `<product_data>` / `<seller_request>` blocks, with `<` and `>` escaped so text can never close a block early, and the model is told to use it as content guidance only, never as new rules (`server/lib/prompts.ts`). Brand Kit values and options are added as structured fields.
 - **Validation:** the provider must return structured JSON (AI SDK `Output.object`); the server re-validates with zod, strips links, HTML, markdown, emails and control characters, fixes lengths on word boundaries, de-duplicates keywords, retries once and then falls back to the next provider within a time budget.
 - **Safety:** AI output is rendered only as escaped text. Ask Kabir answers only from Help Center articles retrieved with BM25, can trigger only allow-listed actions, and every streamed byte passes a redaction filter that masks credentials and blocks system-prompt recitation (tested with an adversarial fake model in `server/security.spec.ts`).
 - **Privacy:** product details and support questions are sent to Groq and Google; email addresses, account IDs and images are never sent. Free AI tiers may use inputs to improve their services, which the Privacy Policy and AI Disclaimer state clearly.
@@ -180,12 +184,22 @@ Firefox and WebKit projects run in CI on Linux; this Windows machine blocks Play
 Keys stay on the server, `.env.local` is gitignored, secretlint runs as a pre-commit hook, and CI runs gitleaks, CodeQL, `npm audit` and Dependabot. Pages ship a hash-based Content Security Policy (no `unsafe-inline` scripts), `frame-ancestors 'none'`, HSTS and other headers. The API validates every request with zod, caps body size, enforces a CORS allow-list and per-IP/per-user rate limits, verifies Firebase ID tokens, and redacts bot output. Firestore rules are owner-only with field validation and no client-set roles. Details: [SECURITY.md](SECURITY.md) and [reports/security-report.md](reports/security-report.md).
 
 ## Deployment
-- **CI/CD:** `.github/workflows/ci.yml` runs lint, typecheck, unit/API/rules/e2e tests, secret scans and the dependency audit; its deploy jobs run only after CI passes and only when their tokens are set. Vercel and Netlify can also build straight from Git with the same build commands (`vercel.json`, `netlify.toml`).
-- **Vercel:** `npm run build:vercel` produces `.vercel/output` (static files + an esbuild-bundled Node function). Needs repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; runtime secrets are set in the Vercel project. PRs get preview URLs posted as a comment.
-- **Hosting env vars:** `node scripts/export-deploy-env.mjs` turns `.env.local` into gitignored `.env.vercel`, `.env.netlify` and `.env.github-variables` files to import in each dashboard, so keys never go through a command line.
-- **Netlify:** `netlify.toml` builds the static site and bundles `netlify/functions/api.mts`. Needs `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
+```mermaid
+flowchart LR
+  PR[Pull request] --> CI{{CI: lint · typecheck · unit · API · rules · e2e on 5 browsers · gitleaks · npm audit}}
+  PR --> PV[Vercel + Netlify preview URLs on the PR]
+  Main[Push to main] --> CI
+  CI -- all green --> GP[GitHub Pages deploy]
+  Main --> VP[Vercel production]
+  Main --> NP[Netlify production]
+```
+- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, Angular and API unit tests, Firestore rules tests in the emulator, Playwright e2e on Chromium, Firefox, WebKit and two phone profiles, gitleaks over the full history, secretlint and `npm audit`.
+- **CD:** GitHub Pages deploys from CI only after every check passes. Vercel and Netlify deploy through their Git integrations with the same build commands (`vercel.json`, `netlify.toml`): production on every push to `main` and a preview URL on every pull request.
+- **Vercel:** `npm run build:vercel` produces `.vercel/output` (static files + an esbuild-bundled Node function for `/api/*`).
+- **Netlify:** `netlify.toml` builds the static site and bundles `netlify/functions/api.mts`; `/api/*` is rewritten to the function.
 - **GitHub Pages:** built with base href `/vitrine-ai-product-cards/`, a `404.html` SPA fallback and the API pointed at Vercel.
-- **Firebase:** project `vitrine-ai-cards` (Spark plan, Firestore in `asia-south1`). Rules and indexes are deployed; Email/Password, Email link and Google sign-in are enabled; the three hosting domains are in Authorized domains.
+- **Hosting env vars:** `node scripts/export-deploy-env.mjs` turns `.env.local` into gitignored `.env.vercel`, `.env.netlify` and `.env.github-variables` files to import in each dashboard, so keys never go through a command line.
+- **Firebase:** project `vitrine-ai-cards` (Spark plan, Firestore in `asia-south1`). Rules and indexes are deployed; Email/Password, Email link and Google sign-in are enabled; the hosting domains are in Authorized domains.
 
 ## Roadmap
 - Bulk generation from a CSV and Shopify/WooCommerce export formats.

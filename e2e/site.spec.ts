@@ -17,6 +17,8 @@ test.describe('Public pages and SEO', () => {
 
   test('hero call to action opens the Studio without signing in', async ({ page }) => {
     await page.goto('/');
+    // Wait for hydration so the click is handled by the router (WebKit hydrates later).
+    await expect(page.locator('html')).toHaveAttribute('data-ready', '');
     await page.getByTestId('hero-cta').click();
     await expect(page).toHaveURL(/\/studio$/);
     await expect(page.getByRole('heading', { name: 'Describe your product' })).toBeVisible();
@@ -129,13 +131,15 @@ test.describe('Ask Kabir support bot', () => {
     await expect(panel.getByText('Sources:')).toBeVisible();
   });
 
-  test('guests can open a support ticket and get a ticket ID', async ({ page }) => {
+  test('guests can open a support ticket and get a ticket ID', async ({ page }, testInfo) => {
+    // A different mailbox per browser project: the API allows only 3 tickets per recipient a day.
+    const mailbox = `asha.${testInfo.project.name.replace(/[^a-z]/g, '')}${testInfo.retry}@example.com`;
     await page.goto('/help');
     await page.getByTestId('kabir-launcher').click();
     await page.getByRole('button', { name: /Talk to a human/ }).click();
     const panel = page.getByTestId('kabir-panel');
     await panel.getByLabel('Your name').fill('Asha Rao');
-    await panel.getByLabel('Email').fill('asha@example.com');
+    await panel.getByLabel('Email').fill(mailbox);
     await panel.getByLabel(/Phone/).fill('+91 98765 43210');
     await panel.getByLabel('Subject').fill('PNG export question');
     await panel.getByLabel('How can we help?').fill('My PNG export looks blurry on my phone. Any tips?');

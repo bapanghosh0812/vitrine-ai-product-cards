@@ -3,9 +3,9 @@ title: Generate product details
 summary: Every field of the generation form, what the AI returns, variations, single-field regeneration and creativity.
 category: Studio
 order: 2
-keywords: [generate, form, name, category, ai, title, description, keywords, variations, regenerate, tone, language, audience, features, price, creativity]
+keywords: [generate, form, name, category, ai, title, description, keywords, variations, regenerate, tone, language, audience, features, price, creativity, brief, prompt, long prompt, enter, new line]
 actions: [open-studio, open-brand-kit]
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 The Studio form has two required fields and several optional ones.
 
@@ -14,6 +14,9 @@ The Studio form has two required fields and several optional ones.
 - **Category**: choose from 20 categories such as Fashion, Electronics, Beauty, Home, Jewellery or Pet Supplies. Pick "Something else" if nothing fits.
 
 The **Generate details** button stays disabled until both are valid. Errors are shown under each field.
+
+## Your brief (long prompt)
+Below the category there is a large **Your brief** box for up to 1,500 characters. Write anything that helps: the story behind the product, materials, who it is for, what to highlight, words to use or avoid. **Enter adds a new line**; nothing is sent until you press **Generate details** (or `Ctrl/Cmd + Enter`). Enter in the single-line fields never submits the form either.
 
 ## Optional fields (More options)
 - **Audience**: who it is for, for example "new parents" or "home baristas".

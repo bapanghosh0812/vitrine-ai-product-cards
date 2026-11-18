@@ -28,7 +28,10 @@
     "og": "tsx scripts/render-og.ts",
     "screenshots": "tsx scripts/screenshots.ts",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "docs": "tsx scripts/build-docs.ts"
+    "docs": "tsx scripts/build-docs.ts",
+    "assets:icons": "node scripts/build-assets.mjs",
+    "assets:emoji": "node scripts/fetch-fluent-emoji.mjs",
+    "env:deploy": "node scripts/export-deploy-env.mjs"
   },
   "private": true,
   "packageManager": "npm@11.19.1",

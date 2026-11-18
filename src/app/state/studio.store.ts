@@ -8,7 +8,7 @@ import {
   type TemplateId,
   type ToneId,
 } from '../../../shared/constants';
-import type { GenerateRequest, GenerateResponse, ProductCopy, StoredCard } from '../../../shared/types';
+import type { CardStyle, GenerateRequest, GenerateResponse, ProductCopy, StoredCard } from '../../../shared/types';
 import { ApiError, ApiService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
 import { BrandKitService } from '../core/brand-kit.service';
@@ -18,6 +18,7 @@ import { ProfileService } from '../core/profile.service';
 import { SettingsService } from '../core/settings.service';
 import { StorageService } from '../core/storage.service';
 import { ToastService } from '../core/toast.service';
+import { cleanStyle } from '../shared/card/card-style';
 
 export interface StudioForm {
   name: string;
@@ -25,6 +26,8 @@ export interface StudioForm {
   audience: string;
   tone: ToneId;
   features: string;
+  /** Optional long brief for the AI (story, materials, what to stress). */
+  brief: string;
   price: string;
   currency: CurrencyId;
   language: LanguageId;
@@ -37,6 +40,7 @@ export interface CardSnapshot {
   active: number;
   template: TemplateId;
   image: string | null;
+  style: CardStyle;
 }
 
 export type StudioPhase = 'idle' | 'generating' | 'regenerating';
@@ -46,7 +50,7 @@ const COALESCE_MS = 900;
 const DRAFT_KEY = 'studio.draft';
 
 function emptySnapshot(template: TemplateId): CardSnapshot {
-  return { variations: [], active: 0, template, image: null };
+  return { variations: [], active: 0, template, image: null, style: {} };
 }
 
 /**
@@ -89,6 +93,9 @@ export class StudioStore {
   readonly copy = computed<ProductCopy | null>(() => this.present().variations[this.present().active] ?? null);
   readonly template = computed(() => this.present().template);
   readonly image = computed(() => this.present().image);
+  readonly style = computed(() => this.present().style);
+  /** Instructions applied with "Ask AI" in this session (newest first). */
+  readonly refineLog = signal<string[]>([]);
   readonly hasCard = computed(() => this.copy() !== null);
   readonly canUndo = computed(() => this.past().length > 0);
   readonly canRedo = computed(() => this.future().length > 0);
@@ -100,7 +107,7 @@ export class StudioStore {
     const draft = this.storage.get<{ form: StudioForm; snapshot: CardSnapshot; savedId: string | null } | null>(DRAFT_KEY, null, 'preference');
     if (draft?.form && draft.snapshot) {
       this.form.set({ ...this.defaultForm(), ...draft.form });
-      this.present.set({ ...emptySnapshot(this.settings.get('defaultTemplate')), ...draft.snapshot });
+      this.present.set({ ...emptySnapshot(this.settings.get('defaultTemplate')), ...draft.snapshot, style: cleanStyle(draft.snapshot.style) });
       this.savedId.set(draft.savedId ?? null);
     }
     effect(() => {
@@ -117,6 +124,7 @@ export class StudioStore {
       audience: '',
       tone: s.defaultTone,
       features: '',
+      brief: '',
       price: '',
       currency: 'INR',
       language: s.defaultLanguage,
@@ -184,6 +192,7 @@ export class StudioStore {
     };
     if (f.audience.trim()) req.audience = f.audience.trim().slice(0, LIMITS.audienceMax);
     if (features.length) req.features = features;
+    if (f.brief.trim()) req.brief = f.brief.trim().slice(0, LIMITS.briefMax);
     if (f.price.trim()) {
       req.price = f.price.trim();
       req.currency = f.currency;
@@ -251,6 +260,30 @@ export class StudioStore {
     }
   }
 
+  /** Revises the active card from a free-form instruction ("shorter", "mention free shipping"). */
+  async refine(instruction: string): Promise<boolean> {
+    const current = this.copy();
+    const ask = instruction.trim().slice(0, LIMITS.instructionMax);
+    if (!current || this.busy() || ask.length < 3) return false;
+    this.phase.set('regenerating');
+    this.error.set(null);
+    try {
+      const res = await this.api.generate(this.buildRequest({ current, instruction: ask, variations: 1 }));
+      const updated = res.variations[0];
+      if (!updated) return false;
+      this.replaceActive(updated);
+      this.meta.set({ provider: res.provider, model: res.model, latencyMs: res.latencyMs, fallbackUsed: res.fallbackUsed });
+      this.refineLog.update((log) => [ask, ...log].slice(0, 5));
+      this.toast.success('Card refined', 'Not quite right? Undo brings the previous version back.');
+      return true;
+    } catch (error) {
+      this.handleError(error);
+      return false;
+    } finally {
+      this.phase.set('idle');
+    }
+  }
+
   cancel(): void {
     this.inflight?.abort();
     this.phase.set('idle');
@@ -291,6 +324,18 @@ export class StudioStore {
     this.commit({ ...this.present(), image });
   }
 
+  /** Applies Style panel changes (undoable; quick slider moves are merged into one step). */
+  setStyle(patch: Partial<CardStyle>): void {
+    const next = cleanStyle({ ...this.present().style, ...patch });
+    if (JSON.stringify(next) === JSON.stringify(this.present().style)) return;
+    this.commit({ ...this.present(), style: next }, `style:${Object.keys(patch).sort().join(',')}`);
+  }
+
+  resetStyle(): void {
+    if (!Object.keys(this.present().style).length) return;
+    this.commit({ ...this.present(), style: {} });
+  }
+
   /* ---------------- persistence ---------------- */
   async save(): Promise<StoredCard | null> {
     const copy = this.copy();
@@ -312,11 +357,13 @@ export class StudioStore {
         audience: form.audience || undefined,
         tone: form.tone,
         features: form.features ? form.features.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 5) : undefined,
+        brief: form.brief.trim() ? form.brief.trim().slice(0, LIMITS.briefMax) : undefined,
         price: form.price || undefined,
         currency: form.price ? form.currency : undefined,
         language: form.language,
       },
       image: this.image(),
+      style: Object.keys(this.style()).length ? this.style() : undefined,
       favourite: existing?.favourite ?? false,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
@@ -343,11 +390,12 @@ export class StudioStore {
       audience: card.inputs.audience ?? '',
       tone: card.inputs.tone ?? this.settings.get('defaultTone'),
       features: (card.inputs.features ?? []).join('\n'),
+      brief: typeof card.inputs.brief === 'string' ? card.inputs.brief.slice(0, LIMITS.briefMax) : '',
       price: card.inputs.price ?? '',
       currency: card.inputs.currency ?? 'INR',
       language: card.inputs.language ?? 'en',
     });
-    this.present.set({ variations: [card.copy], active: 0, template: card.template, image: card.image ?? null });
+    this.present.set({ variations: [card.copy], active: 0, template: card.template, image: card.image ?? null, style: cleanStyle(card.style) });
     this.past.set([]);
     this.future.set([]);
     this.savedId.set(card.id);

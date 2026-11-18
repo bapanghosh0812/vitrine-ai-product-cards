@@ -2,6 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { LIMITS, type CopyField } from '../../../../shared/constants';
 import { StudioStore } from '../../state/studio.store';
 import { Icon } from '../../shared/ui/icon';
+import { RefinePanel } from './refine-panel';
+import { StylePanel } from './style-panel';
+
+type Tab = 'copy' | 'style' | 'ask';
 
 type Level = 'ok' | 'warn' | 'over';
 
@@ -11,13 +15,40 @@ function level(length: number, warn: number, max: number): Level {
 
 @Component({
   selector: 'app-details-panel',
-  imports: [Icon],
+  imports: [Icon, StylePanel, RefinePanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="surface p-5 md:p-6" aria-labelledby="details-title">
       <p class="eyebrow">Step 3</p>
-      <h2 id="details-title" class="font-display text-[1.7rem] leading-tight text-ink">Refine the copy</h2>
+      <h2 id="details-title" class="font-display text-[1.7rem] leading-tight text-ink">Refine &amp; style</h2>
 
+      <div class="tabs mt-4" role="tablist" aria-label="Refine and style">
+        @for (t of tabs; track t.id) {
+          <button
+            type="button"
+            role="tab"
+            class="tabs__tab"
+            [id]="'tab-' + t.id"
+            [attr.aria-selected]="tab() === t.id"
+            [attr.aria-controls]="'panel-' + t.id"
+            [attr.data-testid]="'tab-' + t.id"
+            (click)="tab.set(t.id)"
+          >
+            <app-icon [name]="t.icon" [size]="15" /> {{ t.label }}
+          </button>
+        }
+      </div>
+
+      @if (tab() === 'style') {
+        <div id="panel-style" role="tabpanel" aria-labelledby="tab-style" class="mt-5 animate-fade">
+          <app-style-panel />
+        </div>
+      } @else if (tab() === 'ask') {
+        <div id="panel-ask" role="tabpanel" aria-labelledby="tab-ask" class="mt-5 animate-fade">
+          <app-refine-panel />
+        </div>
+      } @else {
+      <div id="panel-copy" role="tabpanel" aria-labelledby="tab-copy" class="animate-fade">
       @if (store.variations().length > 1) {
         <div class="mt-4 flex rounded-2xl bg-surface-2 p-1" role="tablist" aria-label="Variations">
           @for (v of store.variations(); track $index) {
@@ -113,9 +144,49 @@ function level(length: number, warn: number, max: number): Level {
         </div>
         <p class="mt-4 text-sm text-muted">After generating, edit the title, description and keywords here. SEO counters show when text gets too long for search results.</p>
       }
+      </div>
+      }
     </section>
   `,
   styles: `
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.25rem;
+      padding: 0.25rem;
+      border-radius: 1.1rem;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+    }
+    .tabs__tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      height: 2.4rem;
+      border-radius: 0.85rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition:
+        background 0.25s,
+        color 0.25s,
+        box-shadow 0.25s;
+    }
+    .tabs__tab:hover {
+      color: var(--ink);
+    }
+    .tabs__tab[aria-selected='true'] {
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow:
+        0 1px 2px rgb(0 0 0 / 0.06),
+        0 0 0 1px color-mix(in oklab, var(--gilt) 45%, transparent),
+        0 10px 24px -16px color-mix(in oklab, var(--gilt) 90%, transparent);
+    }
+    .tabs__tab[aria-selected='true'] app-icon {
+      color: var(--gilt);
+    }
     .counter {
       font-size: 0.75rem;
       font-variant-numeric: tabular-nums;
@@ -139,6 +210,12 @@ export class DetailsPanel {
   protected readonly store = inject(StudioStore);
   protected readonly limits = LIMITS;
   protected readonly draft = signal('');
+  protected readonly tab = signal<Tab>('copy');
+  protected readonly tabs: { id: Tab; label: string; icon: 'pencil' | 'palette' | 'sparkles' }[] = [
+    { id: 'copy', label: 'Copy', icon: 'pencil' },
+    { id: 'style', label: 'Style', icon: 'palette' },
+    { id: 'ask', label: 'Ask AI', icon: 'sparkles' },
+  ];
 
   protected readonly titleLevel = computed(() => level(this.store.copy()?.title.length ?? 0, 50, LIMITS.titleSeo));
   protected readonly descLevel = computed(() => level(this.store.copy()?.description.length ?? 0, 150, LIMITS.descriptionSeo));

@@ -54,7 +54,6 @@ export const EMOJI = {
   'rabbit-face': 'Rabbit face',
   frog: 'Frog',
   // badges and UI
-  trophy: 'Trophy',
   'gem-stone': 'Gem stone',
   rocket: 'Rocket',
   fire: 'Fire',
@@ -62,7 +61,6 @@ export const EMOJI = {
   crown: 'Crown',
   'light-bulb': 'Light bulb',
   'party-popper': 'Party popper',
-  '1st-place-medal': '1st place medal',
   'magic-wand': 'Magic wand',
   package: 'Package',
   'shopping-bags': 'Shopping bags',
@@ -72,9 +70,7 @@ export const EMOJI = {
   'speech-balloon': 'Speech balloon',
   'crystal-ball': 'Crystal ball',
   'thinking-face': 'Thinking face',
-  'wrapped-gift': 'Wrapped gift',
   'night-with-stars': 'Night with stars',
-  'high-voltage': 'High voltage',
 };
 
 const outDir = join(process.cwd(), 'public', 'emoji');

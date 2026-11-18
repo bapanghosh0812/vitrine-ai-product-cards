@@ -86,18 +86,27 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "audience",
    "features",
    "price",
-   "creativity"
+   "creativity",
+   "brief",
+   "prompt",
+   "long prompt",
+   "enter",
+   "new line"
   ],
   "actions": [
    "open-studio",
    "open-brand-kit"
   ],
-  "updated": "2026-11-17",
-  "html": "<p>The Studio form has two required fields and several optional ones.</p>\n<h2 id=\"required-fields\">Required fields</h2>\n<ul>\n<li><strong>Product name</strong>: 2 to 80 characters. Be specific: &quot;Matte black ceramic pour-over set&quot; works better than &quot;coffee thing&quot;.</li>\n<li><strong>Category</strong>: choose from 20 categories such as Fashion, Electronics, Beauty, Home, Jewellery or Pet Supplies. Pick &quot;Something else&quot; if nothing fits.</li>\n</ul>\n<p>The <strong>Generate details</strong> button stays disabled until both are valid. Errors are shown under each field.</p>\n<h2 id=\"optional-fields-more-options\">Optional fields (More options)</h2>\n<ul>\n<li><strong>Audience</strong>: who it is for, for example &quot;new parents&quot; or &quot;home baristas&quot;.</li>\n<li><strong>Tone</strong>: Luxurious, Friendly, Playful, Professional, Minimal or Bold.</li>\n<li><strong>Key features</strong>: up to 5 short features, one per line.</li>\n<li><strong>Price and currency</strong>: shown on the Marketplace and Instagram templates.</li>\n<li><strong>Language</strong>: English, Hindi, Bengali, Spanish, French, German, Arabic or Japanese.</li>\n<li><strong>Variations</strong>: 1 or 3. With 3 you get different angles to compare side by side.</li>\n</ul>\n<h2 id=\"what-the-ai-returns\">What the AI returns</h2>\n<p>Every generation returns strict JSON with three parts: a <strong>title</strong> (aim: 60 characters or fewer), a <strong>description</strong> (2 to 3 sentences, about 140 to 220 characters) and <strong>keywords</strong> (4 to 10 lowercase search terms). The server validates the result and retries or switches provider if the output is malformed.</p>\n<h2 id=\"regenerate-one-field\">Regenerate one field</h2>\n<p>Use the small circular-arrow button next to the title, description or keywords in the Details panel to regenerate only that field. The other fields stay as they are.</p>\n<h2 id=\"undo-and-redo\">Undo and redo</h2>\n<p>Every generation and edit is a step in your history. Use the undo and redo buttons, or <code>Ctrl/Cmd + Z</code> and <code>Ctrl/Cmd + Shift + Z</code>.</p>\n<h2 id=\"creativity\">Creativity</h2>\n<p>In Settings, Generation you can choose Precise, Balanced or Creative. Creative produces bolder copy; Precise sticks closely to your inputs.</p>\n",
+  "updated": "2026-11-18",
+  "html": "<p>The Studio form has two required fields and several optional ones.</p>\n<h2 id=\"required-fields\">Required fields</h2>\n<ul>\n<li><strong>Product name</strong>: 2 to 80 characters. Be specific: &quot;Matte black ceramic pour-over set&quot; works better than &quot;coffee thing&quot;.</li>\n<li><strong>Category</strong>: choose from 20 categories such as Fashion, Electronics, Beauty, Home, Jewellery or Pet Supplies. Pick &quot;Something else&quot; if nothing fits.</li>\n</ul>\n<p>The <strong>Generate details</strong> button stays disabled until both are valid. Errors are shown under each field.</p>\n<h2 id=\"your-brief-long-prompt\">Your brief (long prompt)</h2>\n<p>Below the category there is a large <strong>Your brief</strong> box for up to 1,500 characters. Write anything that helps: the story behind the product, materials, who it is for, what to highlight, words to use or avoid. <strong>Enter adds a new line</strong>; nothing is sent until you press <strong>Generate details</strong> (or <code>Ctrl/Cmd + Enter</code>). Enter in the single-line fields never submits the form either.</p>\n<h2 id=\"optional-fields-more-options\">Optional fields (More options)</h2>\n<ul>\n<li><strong>Audience</strong>: who it is for, for example &quot;new parents&quot; or &quot;home baristas&quot;.</li>\n<li><strong>Tone</strong>: Luxurious, Friendly, Playful, Professional, Minimal or Bold.</li>\n<li><strong>Key features</strong>: up to 5 short features, one per line.</li>\n<li><strong>Price and currency</strong>: shown on the Marketplace and Instagram templates.</li>\n<li><strong>Language</strong>: English, Hindi, Bengali, Spanish, French, German, Arabic or Japanese.</li>\n<li><strong>Variations</strong>: 1 or 3. With 3 you get different angles to compare side by side.</li>\n</ul>\n<h2 id=\"what-the-ai-returns\">What the AI returns</h2>\n<p>Every generation returns strict JSON with three parts: a <strong>title</strong> (aim: 60 characters or fewer), a <strong>description</strong> (2 to 3 sentences, about 140 to 220 characters) and <strong>keywords</strong> (4 to 10 lowercase search terms). The server validates the result and retries or switches provider if the output is malformed.</p>\n<h2 id=\"regenerate-one-field\">Regenerate one field</h2>\n<p>Use the small circular-arrow button next to the title, description or keywords in the Details panel to regenerate only that field. The other fields stay as they are.</p>\n<h2 id=\"undo-and-redo\">Undo and redo</h2>\n<p>Every generation and edit is a step in your history. Use the undo and redo buttons, or <code>Ctrl/Cmd + Z</code> and <code>Ctrl/Cmd + Shift + Z</code>.</p>\n<h2 id=\"creativity\">Creativity</h2>\n<p>In Settings, Generation you can choose Precise, Balanced or Creative. Creative produces bolder copy; Precise sticks closely to your inputs.</p>\n",
   "toc": [
    {
     "id": "required-fields",
     "title": "Required fields"
+   },
+   {
+    "id": "your-brief-long-prompt",
+    "title": "Your brief (long prompt)"
    },
    {
     "id": "optional-fields-more-options",
@@ -130,6 +139,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
     "text": "Product name: 2 to 80 characters. Be specific: \"Matte black ceramic pour-over set\" works better than \"coffee thing\". Category: choose from 20 categories such as Fashion, Electronics, Beauty, Home, Jewellery or Pet Supplies. Pick \"Something else\" if nothing fits. The Generate details button stays disabled until both are valid. Errors are shown under each field."
    },
    {
+    "heading": "Your brief (long prompt)",
+    "text": "Below the category there is a large Your brief box for up to 1,500 characters. Write anything that helps: the story behind the product, materials, who it is for, what to highlight, words to use or avoid. Enter adds a new line; nothing is sent until you press Generate details (or Ctrl/Cmd + Enter). Enter in the single-line fields never submits the form either."
+   },
+   {
     "heading": "Optional fields (More options)",
     "text": "Audience: who it is for, for example \"new parents\" or \"home baristas\". Tone: Luxurious, Friendly, Playful, Professional, Minimal or Bold. Key features: up to 5 short features, one per line. Price and currency: shown on the Marketplace and Instagram templates. Language: English, Hindi, Bengali, Spanish, French, German, Arabic or Japanese. Variations: 1 or 3. With 3 you get different angles to compare side by side."
    },
@@ -153,8 +166,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
  },
  {
   "slug": "editing-and-seo",
-  "title": "Edit copy and SEO counters",
-  "summary": "How inline editing works and what the character counters on title and description mean.",
+  "title": "Edit, style and refine your card",
+  "summary": "Inline editing and SEO counters, the Style panel (palettes, fonts, badge, frame, visibility) and Ask AI rewrites in your own words.",
   "category": "Studio",
   "order": 3,
   "keywords": [
@@ -165,35 +178,67 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "characters",
    "length",
    "meta",
-   "google"
+   "google",
+   "style",
+   "palette",
+   "colour",
+   "color",
+   "font",
+   "badge",
+   "ribbon",
+   "frame",
+   "corners",
+   "hide",
+   "ask ai",
+   "rewrite",
+   "refine",
+   "instruction",
+   "shorter",
+   "luxurious"
   ],
   "actions": [
    "open-studio"
   ],
-  "updated": "2026-11-17",
-  "html": "<p>Everything the AI writes is editable.</p>\n<h2 id=\"inline-editing\">Inline editing</h2>\n<p>Edit the title, the description and the keywords in the Details panel next to the card preview. The card updates as you type, and every change is saved to your history so you can undo it.</p>\n<h2 id=\"seo-character-counters\">SEO character counters</h2>\n<ul>\n<li><strong>Title</strong>: the counter turns gold above 50 characters and red above 60. Search engines usually show about 60 characters of a title.</li>\n<li><strong>Description</strong>: the counter turns gold above 150 and red above 160 characters, the typical length of a search snippet.</li>\n<li><strong>Keywords</strong>: 4 to 10 are recommended. Remove a keyword with its small cross, add one with the &quot;Add keyword&quot; field.</li>\n</ul>\n<p>The counters are guidance only. Marketplace listings and social posts can use longer descriptions.</p>\n",
+  "updated": "2026-11-18",
+  "html": "<p>Everything the AI writes is editable. Step 3 in the Studio has three tabs: <strong>Copy</strong>, <strong>Style</strong> and <strong>Ask AI</strong>.</p>\n<h2 id=\"inline-editing-copy-tab\">Inline editing (Copy tab)</h2>\n<p>Edit the title, the description and the keywords in the Copy tab next to the card preview. The card updates as you type, and every change is saved to your history so you can undo it.</p>\n<h2 id=\"seo-character-counters\">SEO character counters</h2>\n<ul>\n<li><strong>Title</strong>: the counter turns gold above 50 characters and red above 60. Search engines usually show about 60 characters of a title.</li>\n<li><strong>Description</strong>: the counter turns gold above 150 and red above 160 characters, the typical length of a search snippet.</li>\n<li><strong>Keywords</strong>: 4 to 10 are recommended. Remove a keyword with its small cross, add one with the &quot;Add keyword&quot; field.</li>\n</ul>\n<p>The counters are guidance only. Marketplace listings and social posts can use longer descriptions.</p>\n<h2 id=\"style-tab\">Style tab</h2>\n<ul>\n<li><strong>Palette:</strong> eight two-tone palettes (Emerald &amp; Gold, Midnight Sapphire, Bordeaux, Noir, Rose Gold, Royal Plum, Ocean Teal, Terracotta), the template&#39;s own colours, or your custom base and accent colours.</li>\n<li><strong>Typography:</strong> serif or sans titles, three title sizes, and Title Case or UPPERCASE.</li>\n<li><strong>Layout:</strong> sharp, soft or round corners, fill or fit for photos, and a gilded hairline frame.</li>\n<li><strong>Badge:</strong> New, Bestseller, Limited edition, Handmade, Eco-friendly, Gift ready, or your own text (up to 24 characters).</li>\n<li><strong>Show on card:</strong> switch the category, description, keywords or price on and off.</li>\n<li><strong>Density:</strong> how many keywords and how many description lines appear.</li>\n</ul>\n<p>Every style change can be undone, <strong>Reset style</strong> returns to the template defaults, and the style is saved with the card and used in PNG, JSON and HTML exports.</p>\n<h2 id=\"ask-ai-tab\">Ask AI tab</h2>\n<p>Write what you want changed in your own words, for example &quot;make it warmer and shorter, mention free shipping&quot;. <strong>Enter adds a new line; only the Send button sends</strong> (or <code>Ctrl/Cmd + Enter</code>). Quick refinements (Shorter, More luxurious, Warmer, Playful, Add urgency, SEO boost, Simpler words, Gift angle) apply in one click. The AI keeps the facts it was given, and Undo brings back the previous version.</p>\n",
   "toc": [
    {
-    "id": "inline-editing",
-    "title": "Inline editing"
+    "id": "inline-editing-copy-tab",
+    "title": "Inline editing (Copy tab)"
    },
    {
     "id": "seo-character-counters",
     "title": "SEO character counters"
+   },
+   {
+    "id": "style-tab",
+    "title": "Style tab"
+   },
+   {
+    "id": "ask-ai-tab",
+    "title": "Ask AI tab"
    }
   ],
   "sections": [
    {
     "heading": "Overview",
-    "text": "Everything the AI writes is editable."
+    "text": "Everything the AI writes is editable. Step 3 in the Studio has three tabs: Copy, Style and Ask AI."
    },
    {
-    "heading": "Inline editing",
-    "text": "Edit the title, the description and the keywords in the Details panel next to the card preview. The card updates as you type, and every change is saved to your history so you can undo it."
+    "heading": "Inline editing (Copy tab)",
+    "text": "Edit the title, the description and the keywords in the Copy tab next to the card preview. The card updates as you type, and every change is saved to your history so you can undo it."
    },
    {
     "heading": "SEO character counters",
     "text": "Title: the counter turns gold above 50 characters and red above 60. Search engines usually show about 60 characters of a title. Description: the counter turns gold above 150 and red above 160 characters, the typical length of a search snippet. Keywords: 4 to 10 are recommended. Remove a keyword with its small cross, add one with the \"Add keyword\" field. The counters are guidance only. Marketplace listings and social posts can use longer descriptions."
+   },
+   {
+    "heading": "Style tab",
+    "text": "Palette: eight two-tone palettes (Emerald & Gold, Midnight Sapphire, Bordeaux, Noir, Rose Gold, Royal Plum, Ocean Teal, Terracotta), the template's own colours, or your custom base and accent colours. Typography: serif or sans titles, three title sizes, and Title Case or UPPERCASE. Layout: sharp, soft or round corners, fill or fit for photos, and a gilded hairline frame. Badge: New, Bestseller, Limited edition, Handmade, Eco-friendly, Gift ready, or your own text (up to 24 characters). Show on card: switch the category, description, keywords or price on and off. Density: how many keywords and how many description lines appear. Every style change can be undone, Reset style returns to the template defaults, and the style is saved with the card and used in PNG, JSON and HTML exports."
+   },
+   {
+    "heading": "Ask AI tab",
+    "text": "Write what you want changed in your own words, for example \"make it warmer and shorter, mention free shipping\". Enter adds a new line; only the Send button sends (or Ctrl/Cmd + Enter). Quick refinements (Shorter, More luxurious, Warmer, Playful, Add urgency, SEO boost, Simpler words, Gift angle) apply in one click. The AI keeps the facts it was given, and Undo brings back the previous version."
    }
   ]
  },

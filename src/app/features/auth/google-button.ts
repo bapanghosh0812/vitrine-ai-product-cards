@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { AuthService, authMessage } from '../../core/auth.service';
 
 @Component({
@@ -23,6 +23,10 @@ export class GoogleButton {
   readonly failed = output<string>();
   private readonly auth = inject(AuthService);
   protected readonly busy = signal(false);
+
+  constructor() {
+    afterNextRender(() => this.auth.warmUpGoogle());
+  }
 
   protected async go(): Promise<void> {
     this.busy.set(true);

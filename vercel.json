@@ -4,6 +4,9 @@
   "installCommand": "npm ci --no-audit --no-fund",
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist/vitrine/browser",
-  "git": { "deploymentEnabled": { "main": true } },
-  "github": { "silent": true }
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
 }

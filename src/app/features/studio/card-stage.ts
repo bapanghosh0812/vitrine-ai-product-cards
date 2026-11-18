@@ -106,6 +106,7 @@ const SAMPLES = [
               [brandName]="brandKit.kit().brandName"
               [brandColours]="brandKit.enabled() ? brandKit.kit().colours : undefined"
               [watermark]="settings.settings().watermark"
+              [cardStyle]="store.style()"
             />
           </div>
         } @else {
@@ -185,6 +186,7 @@ export class CardStage {
       provider: this.store.meta()?.provider,
       model: this.store.meta()?.model,
       image: this.store.image(),
+      style: this.store.style(),
     };
   });
 

@@ -33,6 +33,23 @@ describe('API routes', () => {
     }
   });
 
+  it('POST /api/generate revises the current card from an instruction', async () => {
+    const app = createApp(env);
+    const current = {
+      title: 'Brass and teak table lamp',
+      description: 'A warm brass lamp with a teak base. It turns every evening into a slow golden hour at home.',
+      keywords: ['brass lamp', 'teak lamp', 'table lamp', 'home decor'],
+    };
+    const res = await app.request('/api/generate', json({ name: 'Brass lamp', category: 'home', variations: 3, current, instruction: 'Make it shorter and more premium' }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { variations: { title: string; description: string }[] };
+    expect(body.variations).toHaveLength(1);
+    expect(body.variations[0]!.title).toBe('The Brass and teak table lamp');
+    expect(body.variations[0]!.description.length).toBeLessThan(current.description.length);
+    const missing = await app.request('/api/generate', json({ name: 'Brass lamp', category: 'home', instruction: 'shorter' }, { 'x-forwarded-for': '198.51.100.90' }));
+    expect(missing.status).toBe(422);
+  });
+
   it('rejects malformed JSON (400), invalid input (422) and wrong content type (415)', async () => {
     const app = createApp(env);
     expect((await app.request('/api/generate', json('{"name": '))).status).toBe(400);

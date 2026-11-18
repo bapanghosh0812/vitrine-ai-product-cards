@@ -16,6 +16,14 @@ const line = (max: number, min = 0) =>
     .transform((v) => cleanText(v))
     .pipe(z.string().min(min).max(max));
 
+/** Multi-line text (keeps line breaks), sanitised, with length bounds. */
+const multiline = (max: number, min = 0) =>
+  z
+    .string()
+    .max(max * 2)
+    .transform((v) => cleanMultiline(v))
+    .pipe(z.string().min(min).max(max));
+
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 export const brandKitSchema = z
@@ -54,6 +62,7 @@ export const generateRequestSchema = z
     audience: line(LIMITS.audienceMax).optional(),
     tone: z.enum(TONE_IDS as [string, ...string[]]).optional(),
     features: z.array(line(LIMITS.featureMax)).max(LIMITS.featuresMaxCount).optional(),
+    brief: multiline(LIMITS.briefMax).optional(),
     price: z
       .string()
       .max(LIMITS.priceMax)
@@ -65,12 +74,15 @@ export const generateRequestSchema = z
     variations: z.union([z.literal(1), z.literal(3)]).optional(),
     field: z.enum(['title', 'description', 'keywords']).optional(),
     current: currentCopySchema.optional(),
+    instruction: multiline(LIMITS.instructionMax, 3).optional(),
     brandKit: brandKitSchema.optional(),
     creativity: z.enum(['precise', 'balanced', 'creative']).optional(),
     provider: z.enum(['auto', 'groq', 'gemini']).optional(),
   })
   .strict()
-  .refine((v) => !v.field || !!v.current, { message: 'current copy is required when regenerating a field', path: ['current'] });
+  .refine((v) => !v.field || !!v.current, { message: 'current copy is required when regenerating a field', path: ['current'] })
+  .refine((v) => !v.instruction || !!v.current, { message: 'current copy is required when refining', path: ['current'] })
+  .refine((v) => !(v.instruction && v.field), { message: 'send either field or instruction, not both', path: ['instruction'] });
 
 export type GenerateInput = z.infer<typeof generateRequestSchema>;
 
@@ -97,12 +109,6 @@ export const supportRequestSchema = z
 
 export type SupportInput = z.infer<typeof supportRequestSchema>;
 
-const multiline = (max: number, min = 0) =>
-  z
-    .string()
-    .max(max * 2)
-    .transform((v) => cleanMultiline(v))
-    .pipe(z.string().min(min).max(max));
 
 export const ticketRequestSchema = z
   .object({

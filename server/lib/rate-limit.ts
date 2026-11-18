@@ -73,6 +73,20 @@ export class RateLimiter {
   }
 }
 
+/**
+ * One key per real mailbox, so a recipient limit cannot be dodged with "+tags" or, for Gmail,
+ * dots and the googlemail.com alias (all of these deliver to the same inbox).
+ */
+export function mailboxKey(email: string): string {
+  const at = email.lastIndexOf('@');
+  if (at < 1) return email.toLowerCase();
+  let local = email.slice(0, at).toLowerCase().split('+')[0] ?? '';
+  let domain = email.slice(at + 1).toLowerCase();
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+  if (domain === 'gmail.com') local = local.replace(/\./g, '');
+  return `${local}@${domain}`;
+}
+
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 

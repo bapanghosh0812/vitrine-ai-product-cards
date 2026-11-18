@@ -24,6 +24,7 @@ import { GoogleButton } from './google-button';
           <app-icon name="mail" [size]="28" class="text-accent" />
           <h2 class="mt-3 font-display text-2xl text-ink">Check your inbox</h2>
           <p class="mt-2 text-sm text-muted">We sent a one-time sign-in link to <strong class="text-ink-soft">{{ form.controls.email.value }}</strong>. Open it on this device to finish signing in. It works once and expires soon.</p>
+          <p class="mt-2 text-xs text-muted">Not there after a minute? Check Spam or Promotions. It comes from a <span class="text-ink-soft">noreply@…firebaseapp.com</span> address.</p>
           <button type="button" class="btn btn-ghost mt-4" (click)="linkSent.set(false)">Use a different email</button>
         </div>
       } @else {

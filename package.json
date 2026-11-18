@@ -27,7 +27,8 @@
     "security:audit": "tsx scripts/security-audit.ts",
     "og": "tsx scripts/render-og.ts",
     "screenshots": "tsx scripts/screenshots.ts",
-    "lighthouse": "node scripts/lighthouse.mjs"
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "docs": "tsx scripts/build-docs.ts"
   },
   "private": true,
   "packageManager": "npm@11.19.1",

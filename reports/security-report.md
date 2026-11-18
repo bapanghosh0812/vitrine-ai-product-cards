@@ -116,6 +116,8 @@ Run: 2026-11-18T08:54:14.563Z against the production build with production heade
 ## Findings fixed during testing
 | Area | Finding | Fix |
 | --- | --- | --- |
+| Hosting | The Netlify API crashed on every call: Netlify shipped firebase-admin from node_modules and its Lambda Node could not require() the ESM-only jose package. | The API is prebuilt into one self-contained bundle for both hosts; tested with require(esm) disabled, including token verification. |
+| CI stability | The 5-browser e2e job hung until its 30-minute limit when a WebKit page transition stalled navigation. | View transitions now finish without animating after 1.2 s; e2e runs as one parallel job per browser with a Playwright global timeout. |
 | Prompt structure | User text containing "</product_data>" was copied verbatim into the prompt (JSON does not escape < or >), so it could close the data block early. | All prompt data blocks escape < and > as JSON unicode escapes; covered by a unit test. |
 | Anti-spam | The 3-per-day recipient limit for support confirmations could be dodged with +tags or Gmail dots (all reach one inbox). | Limits key on the real mailbox (tags removed, Gmail dots and googlemail.com normalised); unit test added. |
 | Sign-in | Google sign-in failed on the live site: the service worker re-fetches every GET and the CSP connect-src did not list the Google script origins, so gapi got a synthetic 504. | connect-src now lists apis.google.com, www.gstatic.com and googleusercontent.com; the Google helper loads only on sign-in pages. |

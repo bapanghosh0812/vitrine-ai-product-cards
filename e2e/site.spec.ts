@@ -20,7 +20,8 @@ test.describe('Public pages and SEO', () => {
     // Wait for hydration so the click is handled by the router (WebKit hydrates later).
     await expect(page.locator('html')).toHaveAttribute('data-ready', '');
     await page.getByTestId('hero-cta').click();
-    await expect(page).toHaveURL(/\/studio$/);
+    // The first visit to /studio loads the Studio code; WebKit on CI runners is about 4x slower than Chromium.
+    await expect(page).toHaveURL(/\/studio$/, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: 'Describe your product' })).toBeVisible();
   });
 

@@ -357,9 +357,9 @@ ${liveSection}
 <table><tr><th>Project</th><th>Viewport</th><th>Status</th></tr>
 <tr><td>Chromium desktop</td><td>1440 × 900</td><td class="pass">Executed: all tests passed</td></tr>
 <tr><td>Mobile Chrome (Pixel 7 emulation)</td><td>412 × 839, touch</td><td class="pass">Executed: all tests passed</td></tr>
-<tr><td>Firefox desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally: Windows blocked Playwright's Firefox binary.</td></tr>
-<tr><td>WebKit desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally: Windows blocked Playwright's WebKit binary.</td></tr>
-<tr><td>Mobile Safari (iPhone 14 emulation)</td><td>390 × 664, touch</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 30f4e50). Not run locally (WebKit).</td></tr></table>
+<tr><td>Firefox desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 63adf06). Not run locally: Windows blocked Playwright's Firefox binary.</td></tr>
+<tr><td>WebKit desktop</td><td>1440 × 900</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 63adf06). Not run locally: Windows blocked Playwright's WebKit binary.</td></tr>
+<tr><td>Mobile Safari (iPhone 14 emulation)</td><td>390 × 664, touch</td><td class="pass">Passed on GitHub Actions (Linux, run for commit 63adf06). Not run locally (WebKit).</td></tr></table>
 <h3>E2E results by project</h3>
 <table><tr><th>File</th><th>Test</th>${projects.map((p) => `<th>${esc(p ?? '')}</th>`).join('')}</tr>${e2eMatrix.join('')}</table>
 <h2>9. Known issues and unverified items</h2>

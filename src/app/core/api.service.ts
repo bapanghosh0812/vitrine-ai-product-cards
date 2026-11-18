@@ -87,6 +87,17 @@ export class ApiService {
     }
   }
 
+  async createTicket(body: Record<string, unknown>): Promise<{ ticketId: string; emailed: boolean; confirmation: boolean }> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.base}/api/support/ticket`, { method: 'POST', headers: await this.headers(), body: JSON.stringify(body) });
+    } catch {
+      throw OFFLINE;
+    }
+    if (!res.ok) throw await this.toError(res);
+    return (await res.json()) as { ticketId: string; emailed: boolean; confirmation: boolean };
+  }
+
   async health(): Promise<{ status: string; ai: string; auth: string } | null> {
     try {
       const res = await fetch(`${this.base}/api/health`);

@@ -11,6 +11,7 @@ import { execSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
 import { join } from 'node:path';
+import { parseEnv } from 'node:util';
 import { chromium } from '@playwright/test';
 import { FAKE } from '../server/test-fakes';
 
@@ -170,12 +171,17 @@ try {
     // Patterns require real key material: a bare PEM header (library format checks) or words like
     // "ask-kabir-..." are not credentials. Both false positives were reviewed and are documented.
     const patterns = [/\bgsk_[A-Za-z0-9]{20,}/, /\bsk-(proj-)?(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{32,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----\s+[A-Za-z0-9+/=]{64,}/, /"private_key"\s*:\s*"-----BEGIN/, /\bghp_[A-Za-z0-9]{30,}/, /\bAIza[0-9A-Za-z_-]{35}\b/];
-    const secretValues = ['GROQ_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY'].map((k) => process.env[k]).filter((v): v is string => !!v && v.length > 10);
+    // Real server secrets from .env.local (and the shell), checked by exact value.
+    const local = existsSync('.env.local') ? parseEnv(readFileSync('.env.local', 'utf8')) : {};
+    const secretValues = [...new Set(['GROQ_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_GENERATIVE_AI_API_KEY', 'SMTP_PASS'].flatMap((k) => [local[k], process.env[k]]))].filter((v): v is string => !!v && v.length > 10);
+    // The Firebase web API key is public by design (access is enforced by Firestore rules).
+    const publicFirebaseKey = local['NG_APP_FIREBASE_API_KEY'] ?? process.env['NG_APP_FIREBASE_API_KEY'] ?? '';
     let hits = 0;
     const where: string[] = [];
     for (const f of files) {
       const text = readFileSync(f, 'utf8');
-      for (const p of patterns) if (p.test(text)) (hits++, where.push(`${f}: ${p}`));
+      const scrubbed = publicFirebaseKey ? text.split(publicFirebaseKey).join('') : text;
+      for (const p of patterns) if (p.test(scrubbed)) (hits++, where.push(`${f}: ${p}`));
       for (const v of secretValues) if (text.includes(v)) (hits++, where.push(`${f}: contains a server env secret value`));
     }
     add({
@@ -183,7 +189,7 @@ try {
       title: 'Built bundle secret scan',
       attack: 'Scan every built file (browser bundle and serverless function) for credential patterns and for the actual values of server secrets present in this environment',
       expected: 'Zero matches (the Firebase web config is public by design and is the only key-like value allowed)',
-      observed: [`scanned ${files.length} files, ${secretValues.length} real secret value(s) checked, matches: ${hits}`, ...where.slice(0, 5)],
+      observed: [`scanned ${files.length} files, ${secretValues.length} real secret value(s) checked (AI keys, SMTP app password), matches: ${hits}`, `public Firebase web key allow-listed: ${publicFirebaseKey ? 'yes' : 'not configured'}`, ...where.slice(0, 5)],
       status: hits === 0 ? 'pass' : 'fail',
     });
   }
@@ -372,6 +378,37 @@ try {
         `server healthy after all probes → ${healthy} (a malformed-URL crash in the local preview server was found and fixed in this round)`,
       ],
       status: !traversalText.includes('"devDependencies"') && apiGet.status >= 400 && apiTrav.status === 404 && malformedApi.status === 404 && healthy === 200 ? 'pass' : 'fail',
+    });
+  }
+
+  /* R13 --------------------------------------------------------------- */
+  {
+    const tk = (body: Record<string, unknown>, ip: string) =>
+      post('/api/support/ticket', JSON.stringify({ name: 'Tester', subject: 'Help with export', message: 'This is a security test ticket message.', ...body }), { 'x-forwarded-for': ip });
+    const burst: number[] = [];
+    for (let i = 0; i < 5; i++) burst.push((await tk({ email: `burst${i}@example.com` }, '198.18.0.1')).status);
+    const victim: number[] = [];
+    for (let i = 0; i < 4; i++) victim.push((await tk({ email: 'victim@example.com' }, `198.18.1.${i + 1}`)).status);
+    const inject = await tk({ email: 'a@example.com\r\nBcc: everyone@example.com' }, '198.18.2.1');
+    const forged = await tk({ email: 'x@example.com', uid: 'someone-else', verified: true }, '198.18.2.2');
+    const honeypot = await tk({ email: 'bot@example.com', website: 'http://spam.example' }, '198.18.2.3');
+    add({
+      id: 13,
+      title: 'Support ticket abuse (email spam relay)',
+      attack: 'Burst of tickets from one IP, many tickets to one victim address from different IPs, CRLF header injection in the email field, client-set identity fields, bot honeypot',
+      expected: 'At most 3 tickets per IP per 10 minutes and 3 per recipient per day; injected or unknown fields rejected; bots get a fake success with no email sent',
+      observed: [
+        `one IP, 5 tickets → ${burst.join(', ')}`,
+        `one victim address from 4 IPs → ${victim.join(', ')}`,
+        `CRLF in email field → ${inject.status}`,
+        `client-set uid/verified fields → ${forged.status}`,
+        `honeypot filled → ${honeypot.status} (no email sent; covered by server/ticket.spec.ts)`,
+        'HTML/header escaping and guest confirmations without user text: server/ticket.spec.ts',
+      ],
+      status:
+        burst.slice(0, 3).every((x) => x === 200) && burst.slice(3).every((x) => x === 429) && victim.slice(0, 3).every((x) => x === 200) && victim[3] === 429 && inject.status === 422 && forged.status === 422 && honeypot.status === 200
+          ? 'pass'
+          : 'fail',
     });
   }
 

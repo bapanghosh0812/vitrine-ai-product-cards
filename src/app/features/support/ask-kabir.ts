@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { LIMITS, SUPPORT_ACTIONS, type SupportActionId } from '../../../../shared/constants';
 import { PUBLIC_ENV } from '../../../environments/public-env';
+import { ApiError } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { mediaMatches } from '../../core/platform';
 import { ThemeService } from '../../core/theme.service';
@@ -172,31 +173,71 @@ import { TicketService } from './ticket.service';
             <button type="button" class="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink" (click)="chat.view.set('chat'); ticketDone.set('')"><app-icon name="arrow-left" [size]="15" /> Back to chat</button>
             @if (ticketDone()) {
               <div class="text-center animate-rise">
-                <p class="eyebrow">Ticket created</p>
+                <div class="mx-auto grid size-16 place-items-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#f6e3ae,#c9a35b_60%,#8f6e33)] text-[#2b200c] shadow-lux"><app-icon name="check" [size]="28" /></div>
+                <p class="eyebrow mt-5">Ticket created</p>
                 <p class="mt-2 font-display text-4xl text-ink" data-testid="ticket-id">{{ ticketDone() }}</p>
-                <p class="mt-3 text-sm text-muted">Thanks! A human from the Vitrine team will reply to {{ auth.user()?.email }}. Keep this ID for reference.</p>
-              </div>
-            } @else if (!auth.isSignedIn()) {
-              <h3 class="font-display text-2xl text-ink">Talk to a human</h3>
-              <p class="mt-2 text-sm text-muted">Please sign in so we can reply to your account email. You can also report an issue publicly on GitHub.</p>
-              <div class="mt-5 flex flex-col gap-2">
-                <a routerLink="/auth/sign-in" (click)="close()" class="btn btn-primary">Sign in</a>
-                <a [href]="repo + '/issues/new'" target="_blank" rel="noopener noreferrer" class="btn btn-outline"><app-icon name="github" [size]="16" /> Open a GitHub issue</a>
+                <p class="mt-3 text-sm leading-relaxed text-muted">
+                  Thank you! A human from the Vitrine team will reply within 1–2 business days.
+                  @if (ticketConfirmed()) {
+                    A confirmation is on its way to <strong class="text-ink-soft">{{ ticketEmail() }}</strong>.
+                  }
+                  Keep this ID for reference.
+                </p>
               </div>
             } @else {
               <h3 class="font-display text-2xl text-ink">Talk to a human</h3>
-              <p class="mt-1 text-sm text-muted">We will reply to <strong class="text-ink-soft">{{ auth.user()?.email }}</strong>. Never include passwords.</p>
+              <p class="mt-1 text-sm text-muted">
+                @if (auth.isSignedIn()) {
+                  We will reply to <strong class="text-ink-soft">{{ auth.user()?.email }}</strong>.
+                } @else {
+                  Tell us how to reach you and we will reply by email.
+                }
+                Never include passwords or card details.
+              </p>
               <form [formGroup]="ticket" (ngSubmit)="createTicket()" class="mt-5 grid gap-4" novalidate>
                 <div>
+                  <label for="t-name" class="field-label">Your name</label>
+                  <input id="t-name" class="field" formControlName="name" autocomplete="name" [attr.maxlength]="limits.ticketNameMax" [attr.aria-invalid]="bad('name')" />
+                </div>
+                @if (!auth.isSignedIn()) {
+                  <div>
+                    <label for="t-email" class="field-label">Email</label>
+                    <input id="t-email" type="email" class="field" formControlName="email" autocomplete="email" [attr.aria-invalid]="bad('email')" />
+                    @if (bad('email')) {
+                      <p class="field-error" role="alert">Please enter a valid email.</p>
+                    }
+                  </div>
+                }
+                <div>
+                  <label for="t-phone" class="field-label">Phone <span class="font-normal text-muted">(optional)</span></label>
+                  <input id="t-phone" type="tel" class="field" formControlName="phone" autocomplete="tel" inputmode="tel" placeholder="+91 98xxxxxx10" [attr.maxlength]="limits.ticketPhoneMax" [attr.aria-invalid]="bad('phone')" />
+                  @if (bad('phone')) {
+                    <p class="field-error" role="alert">Use digits, spaces, +, ( ) or - only.</p>
+                  }
+                </div>
+                <div>
                   <label for="t-subject" class="field-label">Subject</label>
-                  <input id="t-subject" class="field" formControlName="subject" [attr.maxlength]="limits.ticketSubjectMax" [attr.aria-invalid]="ticket.controls.subject.invalid && ticket.controls.subject.touched" />
+                  <input id="t-subject" class="field" formControlName="subject" [attr.maxlength]="limits.ticketSubjectMax" [attr.aria-invalid]="bad('subject')" />
                 </div>
                 <div>
                   <label for="t-message" class="field-label">How can we help?</label>
-                  <textarea id="t-message" rows="5" class="field" formControlName="message" [attr.maxlength]="limits.ticketMessageMax" [attr.aria-invalid]="ticket.controls.message.invalid && ticket.controls.message.touched"></textarea>
+                  <textarea id="t-message" rows="5" class="field" formControlName="message" [attr.maxlength]="limits.ticketMessageMax" [attr.aria-invalid]="bad('message')"></textarea>
+                  @if (bad('message')) {
+                    <p class="field-error" role="alert">Please write at least 10 characters.</p>
+                  }
+                </div>
+                <div class="hp" aria-hidden="true">
+                  <label for="t-website">Website</label>
+                  <input id="t-website" tabindex="-1" autocomplete="off" formControlName="website" />
                 </div>
                 <label class="flex items-center gap-2 text-sm text-ink-soft"><input type="checkbox" class="size-4 accent-[var(--accent)]" formControlName="includeChat" /> Attach this chat transcript</label>
-                <button type="submit" class="btn btn-primary" [disabled]="sending()">Create ticket</button>
+                <button type="submit" class="btn btn-primary" [disabled]="sending()" data-testid="ticket-submit">
+                  @if (sending()) {
+                    <span class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
+                  }
+                  Send to the team
+                </button>
+                <p class="text-center text-[0.72rem] text-muted">By sending, you agree that we process these details to answer you. See the <a routerLink="/legal/privacy" (click)="close()" class="link">Privacy Policy</a>.</p>
               </form>
             }
           </div>
@@ -218,6 +259,13 @@ import { TicketService } from './ticket.service';
     }
     .launcher:hover {
       transform: translateY(-3px) scale(1.03);
+    }
+    .hp {
+      position: absolute;
+      left: -10000px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
     }
     .dot {
       width: 6px;
@@ -247,7 +295,13 @@ export class AskKabir {
   protected readonly ticketDone = signal('');
   protected readonly name = computed(() => this.auth.user()?.displayName?.split(' ')[0] ?? '');
 
+  protected readonly ticketConfirmed = signal(false);
+  protected readonly ticketEmail = signal('');
   protected readonly ticket = new FormGroup({
+    name: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(2), Validators.maxLength(LIMITS.ticketNameMax)] }),
+    email: new FormControl('', { nonNullable: true, validators: [Validators.email, Validators.maxLength(120)] }),
+    phone: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^\+?[0-9][0-9 ()-]{6,18}$/)] }),
+    website: new FormControl('', { nonNullable: true }),
     subject: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(3), Validators.maxLength(LIMITS.ticketSubjectMax)] }),
     message: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(10), Validators.maxLength(LIMITS.ticketMessageMax)] }),
     includeChat: new FormControl(true, { nonNullable: true }),
@@ -336,23 +390,40 @@ export class AskKabir {
     void this.router.navigateByUrl(a.getAttribute('href') ?? '/help');
   }
 
+  protected bad(name: 'name' | 'email' | 'phone' | 'subject' | 'message'): boolean {
+    const c = this.ticket.controls[name];
+    return c.invalid && c.touched;
+  }
+
   protected async createTicket(): Promise<void> {
+    const signedIn = this.auth.isSignedIn();
+    const emailCtrl = this.ticket.controls.email;
+    emailCtrl.setValidators(signedIn ? [] : [Validators.required, Validators.email, Validators.maxLength(120)]);
+    emailCtrl.updateValueAndValidity();
+    if (signedIn && !this.ticket.controls.name.value) this.ticket.controls.name.setValue((this.auth.user()?.displayName ?? '').slice(0, 60));
     this.ticket.markAllAsTouched();
     if (this.ticket.invalid) return;
     this.sending.set(true);
     try {
       const v = this.ticket.getRawValue();
-      const id = await this.tickets.create({
+      const result = await this.tickets.create({
+        name: v.name,
+        email: signedIn ? undefined : v.email,
+        phone: v.phone,
         subject: v.subject,
         message: v.message,
         transcript: v.includeChat ? this.chat.transcript() : [],
         page: this.router.url.split(/[?#]/)[0] ?? '/',
+        website: v.website,
       });
-      this.ticketDone.set(id);
-      this.ticket.reset({ subject: '', message: '', includeChat: true });
-      this.toast.success('Ticket created', `Reference ${id}`);
-    } catch {
-      this.toast.error('Could not create the ticket', 'Please try again, or open a GitHub issue.');
+      this.ticketDone.set(result.ticketId);
+      this.ticketConfirmed.set(result.confirmation);
+      this.ticketEmail.set(signedIn ? (this.auth.user()?.email ?? '') : v.email);
+      this.ticket.reset({ name: '', email: '', phone: '', website: '', subject: '', message: '', includeChat: true });
+      this.toast.success('Ticket sent', `Reference ${result.ticketId}`);
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Please try again, or open a GitHub issue.';
+      this.toast.error('Could not send the ticket', message);
     } finally {
       this.sending.set(false);
     }

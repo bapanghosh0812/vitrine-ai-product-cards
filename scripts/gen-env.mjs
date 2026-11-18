@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 
-if (existsSync('.env.local') && !process.env.CI) process.loadEnvFile('.env.local');
+if (existsSync('.env.local') && !process.env.CI) Object.assign(process.env, (await import('node:util')).parseEnv(readFileSync('.env.local', 'utf8')));
 
 const env = (name, fallback = '') => (process.env[name] ?? fallback).trim();
 

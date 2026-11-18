@@ -18,6 +18,38 @@ import { GoogleButton } from './google-button';
 
     <app-google-button [disabled]="busy() || !auth.enabled" (signedIn)="done()" (failed)="error.set($event)" />
 
+    @if (mode() === 'link') {
+      @if (linkSent()) {
+        <div class="mt-6 rounded-2xl border border-line bg-surface-2 p-5 text-center animate-rise" data-testid="link-sent" role="status">
+          <app-icon name="mail" [size]="28" class="text-accent" />
+          <h2 class="mt-3 font-display text-2xl text-ink">Check your inbox</h2>
+          <p class="mt-2 text-sm text-muted">We sent a one-time sign-in link to <strong class="text-ink-soft">{{ form.controls.email.value }}</strong>. Open it on this device to finish signing in. It works once and expires soon.</p>
+          <button type="button" class="btn btn-ghost mt-4" (click)="linkSent.set(false)">Use a different email</button>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="sendLink()" class="mt-6 grid gap-4" novalidate>
+          <div>
+            <label for="link-email" class="field-label">Email</label>
+            <input id="link-email" type="email" class="field" formControlName="email" autocomplete="email" [attr.aria-invalid]="invalid('email')" aria-describedby="link-email-err" />
+            @if (invalid('email')) {
+              <p id="link-email-err" class="field-error" role="alert">Please enter a valid email.</p>
+            }
+          </div>
+          @if (error()) {
+            <p class="rounded-xl bg-[color-mix(in_oklab,var(--danger)_10%,transparent)] px-3 py-2.5 text-sm text-danger" role="alert">{{ error() }}</p>
+          }
+          <button type="submit" class="btn btn-primary btn-lg w-full" data-testid="send-link" [disabled]="busy() || !auth.enabled">
+            @if (busy()) {
+              <span class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
+            } @else {
+              <app-icon name="send" [size]="16" />
+            }
+            Email me a sign-in link
+          </button>
+        </form>
+      }
+      <button type="button" class="mt-4 w-full text-center text-sm font-medium text-accent hover:underline" (click)="setMode('password')">Sign in with a password instead</button>
+    } @else {
     <form [formGroup]="form" (ngSubmit)="submit()" class="mt-6 grid gap-4" novalidate>
       <div>
         <label for="email" class="field-label">Email</label>
@@ -51,6 +83,8 @@ import { GoogleButton } from './google-button';
         Sign in
       </button>
     </form>
+    <button type="button" class="mt-4 w-full text-center text-sm font-medium text-accent hover:underline" data-testid="use-link" (click)="setMode('link')">Email me a sign-in link instead</button>
+    }
     <p class="mt-6 text-center text-sm text-muted">New to Vitrine? <a routerLink="/auth/sign-up" [queryParams]="{ next: next() }" class="link font-medium">Create a free account</a></p>
     <p class="mt-2 text-center text-sm text-muted">No account needed to try it: <a routerLink="/studio" class="link font-medium">continue as a guest</a>.</p>
   `,
@@ -64,6 +98,8 @@ export default class SignInPage {
   protected readonly busy = signal(false);
   protected readonly show = signal(false);
   protected readonly error = signal('');
+  protected readonly mode = signal<'password' | 'link'>('password');
+  protected readonly linkSent = signal(false);
   protected readonly form = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -78,6 +114,28 @@ export default class SignInPage {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     await this.run(() => this.auth.signIn(this.form.controls.email.value, this.form.controls.password.value));
+  }
+
+  protected setMode(mode: 'password' | 'link'): void {
+    this.mode.set(mode);
+    this.error.set('');
+    this.linkSent.set(false);
+  }
+
+  protected async sendLink(): Promise<void> {
+    const email = this.form.controls.email;
+    email.markAsTouched();
+    if (email.invalid) return;
+    this.busy.set(true);
+    this.error.set('');
+    try {
+      await this.auth.sendSignInLink(email.value, this.next());
+      this.linkSent.set(true);
+    } catch (e) {
+      this.error.set(authMessage(e));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   private async run(action: () => Promise<unknown>, message = 'Signed in'): Promise<void> {

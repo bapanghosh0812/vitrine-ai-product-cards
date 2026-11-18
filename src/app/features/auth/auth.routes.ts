@@ -26,6 +26,11 @@ export default [
         data: { seo: { title: 'Reset your password', description: 'Get a link to reset your Vitrine password.', noindex: true } },
       },
       {
+        path: 'email-link',
+        loadComponent: () => import('./email-link.page'),
+        data: { seo: { title: 'Signing you in', description: 'Finish signing in with your email link.', noindex: true } },
+      },
+      {
         path: 'verify-email',
         canActivate: [signedInGuard],
         loadComponent: () => import('./verify-email.page'),

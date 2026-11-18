@@ -39,7 +39,8 @@ export class FirebaseService {
       const app = getApps()[0] ?? initializeApp({ ...PUBLIC_ENV.firebase });
       const auth = authMod.initializeAuth(app, {
         persistence: [authMod.indexedDBLocalPersistence, authMod.browserLocalPersistence],
-        popupRedirectResolver: authMod.browserPopupRedirectResolver,
+        // No global popupRedirectResolver: it would load Google's gapi iframe on every page.
+        // The resolver is passed only to the popup/redirect calls in AuthService.
       });
       auth.useDeviceLanguage();
       let db: Firestore;

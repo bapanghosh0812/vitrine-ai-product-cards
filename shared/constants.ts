@@ -10,7 +10,7 @@ export const APP_VERSION = '1.0.0';
 
 /** Bump these when the legal documents change materially. Users are asked to re-consent. */
 export const TERMS_VERSION = '2026-11-17';
-export const PRIVACY_VERSION = '2026-11-17';
+export const PRIVACY_VERSION = '2026-11-18';
 
 export interface CategoryDef {
   id: string;
@@ -109,6 +109,8 @@ export const LIMITS = {
   supportHistoryMax: 8,
   ticketSubjectMax: 120,
   ticketMessageMax: 2000,
+  ticketNameMax: 60,
+  ticketPhoneMax: 20,
   imageMaxBytes: 300_000,
   requestBodyMaxBytes: 16_384,
 } as const;

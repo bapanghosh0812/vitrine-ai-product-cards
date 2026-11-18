@@ -40,6 +40,10 @@ const MESSAGES: Record<string, string> = {
   'auth/user-disabled': 'This account has been disabled. Please contact support.',
   'auth/operation-not-allowed': 'This sign-in method is not enabled yet.',
   'auth/unauthorized-domain': 'Google sign-in is not enabled for this website address yet.',
+  'auth/unauthorized-continue-uri': 'Email links are not enabled for this website address yet.',
+  'auth/invalid-action-code': 'This sign-in link has expired or was already used. Please request a new one.',
+  'auth/expired-action-code': 'This sign-in link has expired. Please request a new one.',
+  'auth/quota-exceeded': 'We have sent too many emails today. Please try again tomorrow or use your password.',
   'firebase-disabled': 'Accounts are not configured on this deployment. You can keep using Vitrine as a guest.',
 };
 
@@ -78,7 +82,10 @@ export class AuthService {
     this.firebase
       .load()
       .then(({ auth, authMod }) => {
-        authMod.getRedirectResult(auth).catch(() => undefined);
+        // Only finish a redirect sign-in we started; otherwise skip the gapi iframe entirely.
+        if (this.takeRedirectFlag()) {
+          authMod.getRedirectResult(auth, authMod.browserPopupRedirectResolver).catch(() => undefined);
+        }
         authMod.onIdTokenChanged(auth, async (u) => {
           if (!u) {
             this._user.set(null);
@@ -146,15 +153,78 @@ export class AuthService {
     const provider = new authMod.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
-      return await authMod.signInWithPopup(auth, provider);
+      return await authMod.signInWithPopup(auth, provider, authMod.browserPopupRedirectResolver);
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
-        await authMod.signInWithRedirect(auth, provider);
+        this.setRedirectFlag();
+        await authMod.signInWithRedirect(auth, provider, authMod.browserPopupRedirectResolver);
         return null;
       }
       throw error;
     }
+  }
+
+  private static readonly REDIRECT_FLAG = 'vitrine.auth-redirect';
+
+  private setRedirectFlag(): void {
+    try {
+      sessionStorage.setItem(AuthService.REDIRECT_FLAG, '1');
+    } catch {
+      /* storage blocked: the redirect result is simply not read back */
+    }
+  }
+
+  private takeRedirectFlag(): boolean {
+    try {
+      const set = sessionStorage.getItem(AuthService.REDIRECT_FLAG) === '1';
+      sessionStorage.removeItem(AuthService.REDIRECT_FLAG);
+      return set;
+    } catch {
+      return false;
+    }
+  }
+
+  private static readonly LINK_EMAIL = 'vitrine.email-link';
+
+  /** Passwordless sign-in: emails a one-time link that opens /auth/email-link. */
+  async sendSignInLink(email: string, next?: string): Promise<void> {
+    const { auth, authMod } = await this.sdk();
+    const clean = email.trim().toLowerCase();
+    const url = new URL(`${location.origin}${this.basePath()}auth/email-link`);
+    if (next && next.startsWith('/') && !next.startsWith('//')) url.searchParams.set('next', next);
+    await authMod.sendSignInLinkToEmail(auth, clean, { url: url.toString(), handleCodeInApp: true });
+    try {
+      localStorage.setItem(AuthService.LINK_EMAIL, clean);
+    } catch {
+      /* the link page will ask for the email instead */
+    }
+  }
+
+  async isSignInLink(href: string): Promise<boolean> {
+    const { auth, authMod } = await this.sdk();
+    return authMod.isSignInWithEmailLink(auth, href);
+  }
+
+  /** Email saved on this browser when the link was requested (absent on another device). */
+  linkEmail(): string | null {
+    try {
+      return localStorage.getItem(AuthService.LINK_EMAIL);
+    } catch {
+      return null;
+    }
+  }
+
+  async completeSignInLink(email: string, href: string): Promise<UserCredential> {
+    const { auth, authMod } = await this.sdk();
+    const cred = await authMod.signInWithEmailLink(auth, email.trim().toLowerCase(), href);
+    try {
+      localStorage.removeItem(AuthService.LINK_EMAIL);
+    } catch {
+      /* nothing to clean */
+    }
+    this._user.set(await this.toSession(cred.user, true));
+    return cred;
   }
 
   async signOut(): Promise<void> {
@@ -224,7 +294,7 @@ export class AuthService {
       if (!password) throw new AuthError('auth/missing-password', 'Please enter your password to continue.');
       await authMod.reauthenticateWithCredential(u, authMod.EmailAuthProvider.credential(u.email, password));
     } else if (u.providerData.some((p) => p.providerId === 'google.com')) {
-      await authMod.reauthenticateWithPopup(u, new authMod.GoogleAuthProvider());
+      await authMod.reauthenticateWithPopup(u, new authMod.GoogleAuthProvider(), authMod.browserPopupRedirectResolver);
     }
   }
 

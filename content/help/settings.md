@@ -10,7 +10,7 @@ updated: 2026-11-17
 Open **Settings** from the sidebar or the avatar menu. Use the search bar at the top to jump to any setting.
 
 ## Appearance
-Choose **Light** (ivory), **Dark** (emerald-black), **OLED** (true black, saves battery on OLED screens) or **System** to follow your device. You can also switch theme from the top bar.
+Choose **Light** (ivory), **Dark** (emerald-black), **OLED** (true black, saves battery on OLED screens) or **System** to follow your device. The sun or moon button in the top bar cycles through Light, Dark, OLED and System with each click.
 
 ## Generation defaults
 Default tone, language, number of variations, creativity and preferred AI provider (Automatic, Groq first or Gemini first).

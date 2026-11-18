@@ -22,6 +22,7 @@ const rules = read<VitestReport>('reports/raw/rules.json');
 const e2e = read<{ stats: { expected: number; skipped: number; unexpected: number; flaky: number; startTime: string; duration: number }; suites: unknown[] }>('reports/raw/e2e.json');
 const sec = read<{ ranAt: string; rounds: { id: number; title: string; attack: string; expected: string; observed: string[]; status: string }[] }>('reports/raw/security.json');
 const lh = read<{ ranAt: string; results: { preset: string; path: string; performance: number; accessibility: number; bestPractices: number; seo: number; lcpMs: number; cls: number; tbtMs: number }[] }>('reports/raw/lighthouse.json');
+const live = read<{ ranAt: string; generation: { requested: string; status: number; provider: string; model: string; fallbackUsed: boolean; latencyMs: number; title: string | null }[]; jailbreaks: { prompt: string; provider: string; leaked: boolean; answer: string }[] }>('reports/raw/live.json');
 type Cov = { total: Record<'lines' | 'statements' | 'functions' | 'branches', { pct: number; covered: number; total: number }> };
 const covApi = read<Cov>('reports/raw/coverage-api/coverage-summary.json');
 const covNg = read<Cov>('coverage/vitrine/coverage-summary.json');
@@ -166,7 +167,19 @@ ${(lh?.results ?? []).map((r) => `<tr><td>${r.preset}</td><td><code>${r.path}</c
 const secTable = `<table><tr><th>#</th><th>Round</th><th>Attack</th><th>Observed</th><th>Result</th></tr>
 ${(sec?.rounds ?? []).map((r) => `<tr><td>R${r.id}</td><td><b>${esc(r.title)}</b><div class="small">Expected: ${esc(r.expected)}</div></td><td>${esc(r.attack)}</td><td>${r.observed.map((o) => esc(o)).join('<br>')}</td><td class="${r.status === 'pass' ? 'pass' : 'fail'}">${r.status.toUpperCase()}</td></tr>`).join('')}</table>`;
 
+
+const liveSection = live
+  ? `<h3>Live AI verification (real provider keys)</h3>
+<table><tr><th>Requested provider</th><th>Answered by</th><th>Model</th><th>Latency</th><th>Sample title</th></tr>
+${live.generation.map((g) => `<tr><td>${esc(g.requested)}</td><td>${esc(g.provider ?? '-')}</td><td><code>${esc(g.model ?? '-')}</code></td><td>${g.latencyMs} ms</td><td>${esc(g.title ?? '-')}</td></tr>`).join('')}</table>
+<table><tr><th>Prompt sent to Ask Kabir (live model)</th><th>Answer</th><th>Leak</th></tr>
+${live.jailbreaks.map((j) => `<tr><td>${esc(j.prompt)}</td><td>${esc(j.answer)}</td><td class="${j.leaked ? 'fail' : 'pass'}">${j.leaked ? 'LEAK' : 'none'}</td></tr>`).join('')}</table>
+<p class="small">Run ${esc(new Date(live.ranAt).toLocaleString('en-IN'))} against the local API with the real Groq and Gemini keys (scripts/live-check.mjs).</p>`
+  : '';
+
 const FIXED_FINDINGS = [
+  ['Configuration', 'A stale machine-level GEMINI_API_KEY silently overrode the project key in local runs.', 'Local scripts now let .env.local win over machine variables; keys verified against the providers\' model-list APIs.'],
+  ['AI provider drift', 'gemini-2.5-flash is no longer offered to new keys and llama-3.3-70b-versatile is gone from Groq.', 'Defaults moved to gemini-3.1-flash-lite and openai/gpt-oss-20b (still environment-configurable); fallback chain re-verified live.'],
   ['Dependency audit', '4 high-severity advisories in a transitive gRPC package (@grpc/grpc-js via Firebase).', 'npm override to @grpc/grpc-js ^1.14.7; production audit now 0 vulnerabilities.'],
   ['Secret scan', 'Redaction patterns matched ordinary words such as "ask-kabir-support-assistant" (could mask normal bot text).', 'Word-boundary patterns that require key-like structure; scanner false positives (library PEM format checks) documented.'],
   ['Path robustness', 'A malformed percent-encoded URL (/%E0%A4%A) crashed the local preview server (decodeURIComponent).', 'Decode wrapped in try/catch, NUL bytes rejected; API already returned JSON 404.'],
@@ -202,14 +215,15 @@ ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><c
 <ul>
 <li><b>Studio extras:</b> 3 variations, single-field regeneration, inline editing with SEO counters, audience/tone/features/price/language, image upload with in-browser WebP compression, PNG/JSON/HTML export.</li>
 <li><b>Library &amp; Brand Kit:</b> favourites and search; brand voice, words to avoid and colours injected into prompts.</li>
-<li><b>Accounts:</b> Firebase email/password with verification and reset, Google sign-in, guest mode with import on sign-in, consent records with re-consent on new versions, cookie banner (necessary-only by default).</li>
-<li><b>Ask Kabir:</b> streaming support bot answering only from the Help Center (BM25 retrieval), sources, allow-listed actions, feedback and human tickets.</li>
+<li><b>Accounts:</b> Firebase email/password with verification and reset, Google sign-in, passwordless email-link sign-in, guest mode with import on sign-in, consent records with re-consent on new versions, cookie banner (necessary-only by default).</li>
+<li><b>Ask Kabir:</b> streaming support bot answering only from the Help Center (BM25 retrieval), sources, allow-listed actions and feedback.</li>
+<li><b>Human support by email:</b> anyone (guest or signed in) can open a ticket with name, email, optional phone and message. The team receives it in the support inbox (Reply-To set to the customer) and the customer instantly gets a branded emerald-and-gold confirmation email with the ticket ID, links to the Studio and Help Center. Hard anti-spam limits, a honeypot and verified-email rules prevent abuse.</li>
 <li><b>Settings, Profile, Admin:</b> searchable settings in 10 sections, avatars/stats/badges, owner support inbox via custom claim.</li>
 <li><b>Legal:</b> 26-section Terms (scroll-to-accept), Privacy Policy (DPDP Act 2023 + GDPR), Cookies, AI Disclaimer, Acceptable Use.</li>
-<li><b>Quality:</b> prerendered public pages, PWA + offline page, Lighthouse 98–100, WCAG 2.1 AA checks.</li>
+<li><b>Quality:</b> prerendered public pages, PWA + offline page, Lighthouse performance ${lhMin('performance')}–${lhMax('performance')}, WCAG 2.1 AA checks.</li>
 </ul>
 <h2 class="page-break">3. Screenshots</h2>
-<p class="small">Captured from the production build with sample copy (AI keys were not configured at capture time).</p>
+<p class="small">Captured from the production build with fixed sample copy so the images are reproducible.</p>
 <div class="shots">
 <figure><img src="${img('landing')}" alt=""><figcaption>Landing page (prerendered)</figcaption></figure>
 <figure><img src="${img('studio')}" alt=""><figcaption>Studio: form, Luxe Gold card, three variations, refine panel</figcaption></figure>
@@ -239,7 +253,7 @@ ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><c
 <h2>5. How AI is used</h2>
 <table><tr><th style="width:22%">Aspect</th><th>Details</th></tr>
 <tr><td><b>Features</b></td><td>Title (≤ 60 chars target), 2–3 sentence description (≈ 140–220 chars), 4–10 keywords; three variations; single-field regeneration; support answers in Ask Kabir.</td></tr>
-<tr><td><b>Models</b></td><td>Groq <code>openai/gpt-oss-120b</code> (primary), Google <code>gemini-2.5-flash</code> (fallback), Groq <code>llama-3.3-70b-versatile</code> (backup). All configurable through environment variables; the UI shows which provider answered.</td></tr>
+<tr><td><b>Models</b></td><td>Groq <code>openai/gpt-oss-120b</code> (primary), Google <code>gemini-3.1-flash-lite</code> (fallback), Groq <code>openai/gpt-oss-20b</code> (backup). All configurable through environment variables; the UI shows which provider answered.</td></tr>
 <tr><td><b>Prompting</b></td><td>Fixed system prompt with copy and safety rules. User input is serialised as JSON inside <code>&lt;product_data&gt;</code> and treated as data only. Brand Kit and options are structured fields.</td></tr>
 <tr><td><b>Validation</b></td><td>Structured output (AI SDK <code>Output.object</code>) → zod re-validation → removal of links, HTML, markdown, emails and control characters → word-boundary clamping → keyword de-duplication → one retry → next provider within a time budget.</td></tr>
 <tr><td><b>Safety</b></td><td>AI text is rendered only as escaped text. The bot answers only from retrieved Help Center chunks, can trigger only allow-listed actions, and every streamed byte passes a redaction filter that masks credentials and replaces any recited system prompt with a refusal.</td></tr>
@@ -247,6 +261,7 @@ ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><c
 <tr><td><b>Limitations</b></td><td>Copy can be generic or wrong; non-English output may be less fluent; free-tier rate limits apply. Users are told to review before publishing.</td></tr>
 <tr><td><b>Brand art</b></td><td>The Kabir mascot and app-icon artwork were created with AI image tools. The SVG logo and interface were designed and built by hand.</td></tr>
 </table>
+${liveSection}
 <h2 class="page-break">6. Security</h2>
 <p>Defence in depth across browser, API, AI and data layers, verified by a 12-round self-attack audit (<code>scripts/security-audit.ts</code>) against the production build with production headers. Result: <b>${secPassed}/${sec?.rounds.length ?? 0} rounds passed</b> after fixing the findings below.</p>
 <table><tr><th>Area</th><th>Finding</th><th>Fix</th></tr>${FIXED_FINDINGS.map((f) => `<tr><td><b>${esc(f[0]!)}</b></td><td>${esc(f[1]!)}</td><td>${esc(f[2]!)}</td></tr>`).join('')}</table>
@@ -267,7 +282,7 @@ ${REQS.map((r) => `<tr><td><b>${esc(r[0]!)}</b></td><td>${esc(r[1]!)}</td><td><c
 <h2>8. How to evaluate</h2>
 <ul>
 <li>Open the live app and press <b>Open the Studio</b>. No login is needed: guest mode runs the full generator and saves cards in the browser.</li>
-<li>To see accounts, sign up with email (verification link) or Google. There is deliberately no shared demo account (see ADR 0007).</li>
+<li>To see accounts, sign up with email (verification link), Google, or a one-time email link. There is deliberately no shared demo account (see ADR 0007).</li>
 <li>Try 3 variations, regenerate one field, switch templates, export PNG/JSON/HTML, save to the Library, ask Kabir a question, and switch to dark or OLED theme.</li>
 </ul>
 <h2>9. Future scope</h2>
@@ -298,10 +313,11 @@ ${kpiBlock}
 <h2>2. Strategy</h2>
 <table><tr><th style="width:20%">Layer</th><th>What is tested</th><th style="width:22%">How</th></tr>
 <tr><td><b>Unit (API)</b></td><td>Sanitisers, zod schemas, prompt construction, output finalisation, rate limiter, redaction, KB retrieval; route behaviour (200/400/401/403/404/413/415/422/429/503), CORS, streaming support, fallback when AI is not configured.</td><td>Vitest, <code>app.request()</code> without a network</td></tr>
+<tr><td><b>Support tickets</b></td><td>Inbox + confirmation emails, guest confirmations without user text, HTML and header injection, honeypot, per-IP and per-recipient limits, mail outages (502/503).</td><td>Vitest with a capture mailer</td></tr>
 <tr><td><b>Security (API)</b></td><td>An adversarial fake model that leaks a key split across chunks, recites the system prompt, dumps env values and requests forbidden actions.</td><td>Vitest with an injected stream</td></tr>
 <tr><td><b>Unit/component (UI)</b></td><td>Signal store (generate, undo/redo, coalescing, regenerate one field, keyword sanitising, rate-limit cooldown, save/load), card templates and HTML escaping, form validation, export escaping, XSS-safe Markdown.</td><td>Vitest + TestBed (zoneless)</td></tr>
 <tr><td><b>Rules</b></td><td>IDOR with a second user, unauthenticated access, privilege escalation, field validation, ticket spoofing, admin-only status, default deny.</td><td>Firestore emulator</td></tr>
-<tr><td><b>End-to-end</b></td><td>Validation, generation, editing, undo/redo, templates, variations, field regeneration, Library save, JSON export, rate-limit UX, XSS rendering, SEO tags, help search, legal TOC, theme, settings search, scroll-to-accept Terms, Ask Kabir, mobile navigation.</td><td>Playwright against the production build with the real API and mock AI</td></tr>
+<tr><td><b>End-to-end</b></td><td>Validation, generation, editing, undo/redo, templates, variations, field regeneration, Library save, JSON export, rate-limit UX, XSS rendering, SEO tags, help search, legal TOC, theme, settings search, scroll-to-accept Terms, passwordless sign-in and forgot-password forms, Ask Kabir, guest support tickets, mobile navigation.</td><td>Playwright against the production build with the real API, mock AI and captured email</td></tr>
 <tr><td><b>Accessibility</b></td><td>WCAG 2.1 A/AA rules on 7 key pages.</td><td>axe-core inside Playwright</td></tr>
 <tr><td><b>Performance/SEO</b></td><td>Mobile and desktop Lighthouse on 4 pages.</td><td>Lighthouse 13.6</td></tr>
 <tr><td><b>Security</b></td><td>12 attack rounds against the running production build.</td><td>scripts/security-audit.ts</td></tr></table>
@@ -324,6 +340,7 @@ ${lhTable}
 <p>axe-core (tags wcag2a, wcag2aa, wcag21a, wcag21aa) reports <b>0 serious or critical violations</b> on <code>/</code>, <code>/studio</code>, <code>/help</code>, <code>/legal/privacy</code>, <code>/settings</code>, <code>/auth/sign-in</code> and <code>/templates</code> in every executed browser project. Lighthouse accessibility is ${lhMin('accessibility')} on all audited pages. Manual design checks: keyboard navigation and visible focus, skip link, reduced-motion support, large-text option, labelled controls, live regions for toasts and chat.</p>
 <h2 class="page-break">7. Security rounds</h2>
 ${secTable}
+${liveSection}
 <h3>Findings fixed during testing</h3>
 <table><tr><th>Area</th><th>Finding</th><th>Fix</th></tr>${FIXED_FINDINGS.map((f) => `<tr><td><b>${esc(f[0]!)}</b></td><td>${esc(f[1]!)}</td><td>${esc(f[2]!)}</td></tr>`).join('')}</table>
 <h2 class="page-break">8. Browser and responsive matrix</h2>
@@ -337,8 +354,8 @@ ${secTable}
 <table><tr><th>File</th><th>Test</th>${projects.map((p) => `<th>${esc(p ?? '')}</th>`).join('')}</tr>${e2eMatrix.join('')}</table>
 <h2>9. Known issues and unverified items</h2>
 <ul>
-<li><b>Live AI not verified yet:</b> provider keys were not configured during testing, so generation and the support bot were tested with the mock provider and an adversarial fake model. The real Groq/Gemini integration must be smoke-tested after keys are added.</li>
-<li><b>Firebase not connected yet:</b> sign-up, verification, Google sign-in and Firestore sync were not exercised against a real project; Firestore rules were verified in the emulator.</li>
+<li><b>Live AI:</b> automated suites use the mock provider for determinism; the real Groq and Gemini integration and live jailbreak resistance were verified separately (section 7). Larger free-tier Gemini models returned temporary "high demand" errors, so the fallback uses gemini-3.1-flash-lite.</li>
+<li><b>Firebase:</b> project created, Email/Password, Email link and Google sign-in enabled, rules deployed. Rules are verified in the emulator; sign-up and sync against the live project are checked manually after deployment.</li>
 <li><b>Deployments pending:</b> Vercel, Netlify and GitHub Pages builds were verified locally (Build Output API bundle, Netlify headers, Pages fallback), not on the hosts.</li>
 <li><b>Firefox/WebKit:</b> run only in CI (see matrix).</li>
 <li><b>Rate limiting</b> is in-memory per serverless instance (best effort); provider quotas are the outer limit.</li>

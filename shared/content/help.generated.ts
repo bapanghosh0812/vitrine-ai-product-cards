@@ -458,7 +458,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
  {
   "slug": "accounts",
   "title": "Accounts, sign-in and verification",
-  "summary": "Create an account with email or Google, verify your email, reset a forgotten password and import guest cards.",
+  "summary": "Create an account with email or Google, sign in with a one-time email link, verify your email, reset a forgotten password and import guest cards.",
   "category": "Account",
   "order": 9,
   "keywords": [
@@ -470,6 +470,9 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "register",
    "google",
    "email",
+   "email link",
+   "magic link",
+   "passwordless",
    "verify",
    "verification",
    "password",
@@ -483,12 +486,16 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "open-sign-up",
    "open-profile"
   ],
-  "updated": "2026-11-17",
-  "html": "<h2 id=\"create-an-account\">Create an account</h2>\n<p>Go to <strong>Sign up</strong>, enter your name, email and a password of at least 8 characters with a letter and a number, then tick the box to accept the Terms of Service and Privacy Policy. Opening the Terms shows the full document; the Accept button unlocks once you scroll to the end. You can also continue with <strong>Google</strong>.</p>\n<h2 id=\"verify-your-email\">Verify your email</h2>\n<p>After signing up with email we send a verification link. Open it, then return to Vitrine; the Verify email page checks again on its own. Until you verify, the Studio still works but saving to the cloud Library is paused.</p>\n<h2 id=\"forgot-your-password\">Forgot your password</h2>\n<p>On the Sign in page choose <strong>Forgot password</strong>, enter your email and follow the link we send. For privacy we show the same message whether or not the email has an account.</p>\n<h2 id=\"import-guest-cards\">Import guest cards</h2>\n<p>If you made cards as a guest, Vitrine offers to import them into your account the first time you sign in on that browser.</p>\n<h2 id=\"updated-terms\">Updated terms</h2>\n<p>When the Terms of Service or Privacy Policy change, you are asked to review and accept the new version before continuing.</p>\n",
+  "updated": "2026-11-18",
+  "html": "<h2 id=\"create-an-account\">Create an account</h2>\n<p>Go to <strong>Sign up</strong>, enter your name, email and a password of at least 8 characters with a letter and a number, then tick the box to accept the Terms of Service and Privacy Policy. Opening the Terms shows the full document; the Accept button unlocks once you scroll to the end. You can also continue with <strong>Google</strong>.</p>\n<h2 id=\"sign-in-without-a-password\">Sign in without a password</h2>\n<p>On the Sign in page choose <strong>Email me a sign-in link instead</strong>, enter your email and open the link we send on the same device. The link works once and expires soon. If you open it on a different device, Vitrine asks you to type the email again so a forwarded link cannot sign in someone else. A new email address gets a new account, and you are asked to accept the Terms first.</p>\n<h2 id=\"verify-your-email\">Verify your email</h2>\n<p>After signing up with email we send a verification link. Open it, then return to Vitrine; the Verify email page checks again on its own. Until you verify, the Studio still works but saving to the cloud Library is paused.</p>\n<h2 id=\"forgot-your-password\">Forgot your password</h2>\n<p>On the Sign in page choose <strong>Forgot password</strong>, enter your email and follow the link we send. For privacy we show the same message whether or not the email has an account.</p>\n<h2 id=\"import-guest-cards\">Import guest cards</h2>\n<p>If you made cards as a guest, Vitrine offers to import them into your account the first time you sign in on that browser.</p>\n<h2 id=\"updated-terms\">Updated terms</h2>\n<p>When the Terms of Service or Privacy Policy change, you are asked to review and accept the new version before continuing.</p>\n",
   "toc": [
    {
     "id": "create-an-account",
     "title": "Create an account"
+   },
+   {
+    "id": "sign-in-without-a-password",
+    "title": "Sign in without a password"
    },
    {
     "id": "verify-your-email",
@@ -511,6 +518,10 @@ export const HELP_ARTICLES: HelpArticle[] = [
    {
     "heading": "Create an account",
     "text": "Go to Sign up, enter your name, email and a password of at least 8 characters with a letter and a number, then tick the box to accept the Terms of Service and Privacy Policy. Opening the Terms shows the full document; the Accept button unlocks once you scroll to the end. You can also continue with Google."
+   },
+   {
+    "heading": "Sign in without a password",
+    "text": "On the Sign in page choose Email me a sign-in link instead, enter your email and open the link we send on the same device. The link works once and expires soon. If you open it on a different device, Vitrine asks you to type the email again so a forwarded link cannot sign in someone else. A new email address gets a new account, and you are asked to accept the Terms first."
    },
    {
     "heading": "Verify your email",
@@ -560,7 +571,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "theme-light"
   ],
   "updated": "2026-11-17",
-  "html": "<p>Open <strong>Settings</strong> from the sidebar or the avatar menu. Use the search bar at the top to jump to any setting.</p>\n<h2 id=\"appearance\">Appearance</h2>\n<p>Choose <strong>Light</strong> (ivory), <strong>Dark</strong> (emerald-black), <strong>OLED</strong> (true black, saves battery on OLED screens) or <strong>System</strong> to follow your device. You can also switch theme from the top bar.</p>\n<h2 id=\"generation-defaults\">Generation defaults</h2>\n<p>Default tone, language, number of variations, creativity and preferred AI provider (Automatic, Groq first or Gemini first).</p>\n<h2 id=\"card-export\">Card &amp; Export</h2>\n<p>Default template, PNG export scale and the &quot;Made with Vitrine&quot; watermark.</p>\n<h2 id=\"notifications-sound\">Notifications &amp; Sound</h2>\n<p>Toasts for completed actions, subtle interface sounds and haptic feedback on supported phones.</p>\n<h2 id=\"accessibility\">Accessibility</h2>\n<p>Reduce motion, larger text and stronger focus outlines. Vitrine also respects your system&#39;s reduced-motion setting.</p>\n<h2 id=\"keyboard-shortcuts\">Keyboard shortcuts</h2>\n<ul>\n<li><code>Ctrl/Cmd + K</code>: command palette</li>\n<li><code>Ctrl/Cmd + Enter</code>: generate</li>\n<li><code>Ctrl/Cmd + Z</code> / <code>Ctrl/Cmd + Shift + Z</code>: undo / redo</li>\n<li><code>G</code> then <code>S</code>, <code>L</code>, <code>T</code> or <code>B</code>: go to Studio, Library, Templates or Brand Kit</li>\n<li><code>?</code>: show all shortcuts</li>\n</ul>\n",
+  "html": "<p>Open <strong>Settings</strong> from the sidebar or the avatar menu. Use the search bar at the top to jump to any setting.</p>\n<h2 id=\"appearance\">Appearance</h2>\n<p>Choose <strong>Light</strong> (ivory), <strong>Dark</strong> (emerald-black), <strong>OLED</strong> (true black, saves battery on OLED screens) or <strong>System</strong> to follow your device. The sun or moon button in the top bar cycles through Light, Dark, OLED and System with each click.</p>\n<h2 id=\"generation-defaults\">Generation defaults</h2>\n<p>Default tone, language, number of variations, creativity and preferred AI provider (Automatic, Groq first or Gemini first).</p>\n<h2 id=\"card-export\">Card &amp; Export</h2>\n<p>Default template, PNG export scale and the &quot;Made with Vitrine&quot; watermark.</p>\n<h2 id=\"notifications-sound\">Notifications &amp; Sound</h2>\n<p>Toasts for completed actions, subtle interface sounds and haptic feedback on supported phones.</p>\n<h2 id=\"accessibility\">Accessibility</h2>\n<p>Reduce motion, larger text and stronger focus outlines. Vitrine also respects your system&#39;s reduced-motion setting.</p>\n<h2 id=\"keyboard-shortcuts\">Keyboard shortcuts</h2>\n<ul>\n<li><code>Ctrl/Cmd + K</code>: command palette</li>\n<li><code>Ctrl/Cmd + Enter</code>: generate</li>\n<li><code>Ctrl/Cmd + Z</code> / <code>Ctrl/Cmd + Shift + Z</code>: undo / redo</li>\n<li><code>G</code> then <code>S</code>, <code>L</code>, <code>T</code> or <code>B</code>: go to Studio, Library, Templates or Brand Kit</li>\n<li><code>?</code>: show all shortcuts</li>\n</ul>\n",
   "toc": [
    {
     "id": "appearance",
@@ -594,7 +605,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    },
    {
     "heading": "Appearance",
-    "text": "Choose Light (ivory), Dark (emerald-black), OLED (true black, saves battery on OLED screens) or System to follow your device. You can also switch theme from the top bar."
+    "text": "Choose Light (ivory), Dark (emerald-black), OLED (true black, saves battery on OLED screens) or System to follow your device. The sun or moon button in the top bar cycles through Light, Dark, OLED and System with each click."
    },
    {
     "heading": "Generation defaults",
@@ -873,7 +884,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    "open-help"
   ],
   "updated": "2026-11-17",
-  "html": "<h2 id=\"ask-kabir\">Ask Kabir</h2>\n<p>Kabir is Vitrine&#39;s support assistant, the mascot in the bottom-right corner. Kabir answers questions about using Vitrine using only this Help Center, and can open the right page for you. Kabir cannot see your cards, account details or anyone else&#39;s data, and never asks for passwords.</p>\n<h2 id=\"talk-to-a-human\">Talk to a human</h2>\n<p>Choose <strong>Talk to a human</strong> in the chat. Write a short subject and message; you receive a ticket ID such as VT-7K2M9Q. Tickets are stored securely and only you and the Vitrine team can read them. You need to be signed in to open a ticket so we can reply to your account email; guests can also report issues on the project&#39;s GitHub Issues page.</p>\n<h2 id=\"feedback\">Feedback</h2>\n<p>Use the thumbs up and thumbs down buttons under any answer to tell us whether it helped.</p>\n",
+  "html": "<h2 id=\"ask-kabir\">Ask Kabir</h2>\n<p>Kabir is Vitrine&#39;s support assistant, the mascot in the bottom-right corner. Kabir answers questions about using Vitrine using only this Help Center, and can open the right page for you. Kabir cannot see your cards, account details or anyone else&#39;s data, and never asks for passwords.</p>\n<h2 id=\"talk-to-a-human\">Talk to a human</h2>\n<p>Choose <strong>Talk to a human</strong> in the chat. Enter your name, email (filled in automatically when you are signed in), an optional phone number, a subject and your message. You immediately get a ticket ID such as VT-7K2M9Q on screen and a confirmation email with the same ID. The Vitrine team receives your request by email and replies within 1 to 2 business days. Never include passwords or card details. Guests can open tickets too; signed-in users also see their tickets on the Profile page.</p>\n<h2 id=\"feedback\">Feedback</h2>\n<p>Use the thumbs up and thumbs down buttons under any answer to tell us whether it helped.</p>\n",
   "toc": [
    {
     "id": "ask-kabir",
@@ -895,7 +906,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
    },
    {
     "heading": "Talk to a human",
-    "text": "Choose Talk to a human in the chat. Write a short subject and message; you receive a ticket ID such as VT-7K2M9Q. Tickets are stored securely and only you and the Vitrine team can read them. You need to be signed in to open a ticket so we can reply to your account email; guests can also report issues on the project's GitHub Issues page."
+    "text": "Choose Talk to a human in the chat. Enter your name, email (filled in automatically when you are signed in), an optional phone number, a subject and your message. You immediately get a ticket ID such as VT-7K2M9Q on screen and a confirmation email with the same ID. The Vitrine team receives your request by email and replies within 1 to 2 business days. Never include passwords or card details. Guests can open tickets too; signed-in users also see their tickets on the Profile page."
    },
    {
     "heading": "Feedback",

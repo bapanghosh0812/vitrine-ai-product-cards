@@ -22,7 +22,7 @@ const next = { ...current };
 const secretsFile = join(dir, 'SECRETS.env');
 if (existsSync(secretsFile)) {
   const s = parseEnv(readFileSync(secretsFile, 'utf8'));
-  for (const key of ['GROQ_API_KEY', 'GEMINI_API_KEY', 'OWNER_EMAIL', 'SUPPORT_EMAIL']) {
+  for (const key of ['GROQ_API_KEY', 'GEMINI_API_KEY', 'OWNER_EMAIL', 'SUPPORT_EMAIL', 'SMTP_USER', 'SMTP_PASS', 'SUPPORT_INBOX']) {
     if (s[key]?.trim()) next[key] = s[key].trim();
   }
   if (s.SUPPORT_EMAIL?.trim()) next.NG_APP_SUPPORT_EMAIL = s.SUPPORT_EMAIL.trim();

@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-if (existsSync('.env.local') && !process.env.CI) process.loadEnvFile('.env.local');
+if (existsSync('.env.local') && !process.env.CI) Object.assign(process.env, (await import('node:util')).parseEnv(readFileSync('.env.local', 'utf8')));
 
 const target = process.argv[process.argv.indexOf('--target') + 1];
 if (!['vercel', 'netlify', 'pages'].includes(target)) {

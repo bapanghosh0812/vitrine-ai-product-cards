@@ -86,4 +86,9 @@ export const RULES = {
   supportIpHour: { limit: 80, windowMs: HOUR },
   supportUserMinute: { limit: 12, windowMs: MINUTE },
   healthIpMinute: { limit: 60, windowMs: MINUTE },
+  // Support tickets send real emails, so they are throttled hard (anti-spam relay).
+  ticketIpBurst: { limit: 3, windowMs: 10 * MINUTE },
+  ticketIpDay: { limit: 8, windowMs: 24 * HOUR },
+  ticketRecipientDay: { limit: 3, windowMs: 24 * HOUR },
+  ticketGlobalDay: { limit: 300, windowMs: 24 * HOUR },
 } satisfies Record<string, LimitRule>;

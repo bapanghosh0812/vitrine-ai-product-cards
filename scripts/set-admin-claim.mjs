@@ -13,7 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
-if (existsSync('.env.local')) process.loadEnvFile('.env.local');
+if (existsSync('.env.local')) Object.assign(process.env, (await import('node:util')).parseEnv(readFileSync('.env.local', 'utf8')));
 const arg = (name) => {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : undefined;

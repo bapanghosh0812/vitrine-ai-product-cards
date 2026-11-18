@@ -8,12 +8,15 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize } from 'node:path';
+import { parseEnv } from 'node:util';
 import { brotliCompressSync, constants as zlibConstants, gzipSync } from 'node:zlib';
 import { getRequestListener } from '@hono/node-server';
 
-if (existsSync('.env.local') && !process.env['CI']) process.loadEnvFile('.env.local');
+if (existsSync('.env.local') && !process.env['CI']) Object.assign(process.env, parseEnv(readFileSync('.env.local', 'utf8')));
 // Deterministic by default (tests, Lighthouse). Set LIVE_AI=1 to call the real providers.
 if (process.env['LIVE_AI'] !== '1') process.env['AI_MOCK'] = '1';
+// Never send real email from tests or local previews unless explicitly asked.
+if (process.env['LIVE_MAIL'] !== '1') process.env['MAIL_MOCK'] = '1';
 
 const { createApp, normaliseRequest } = await import('../server/app');
 const { readEnv } = await import('../server/env');

@@ -9,7 +9,7 @@ Type a product name and a category, get a **title, short description and SEO key
 
 [![CI/CD](https://github.com/bapanghosh0812/vitrine-ai-product-cards/actions/workflows/ci.yml/badge.svg)](https://github.com/bapanghosh0812/vitrine-ai-product-cards/actions/workflows/ci.yml)
 ![Angular](https://img.shields.io/badge/Angular-22-0E4D3A)
-![Lighthouse](https://img.shields.io/badge/Lighthouse-98%E2%80%93100-C9A35B)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-95%E2%80%93100-C9A35B)
 ![License](https://img.shields.io/badge/license-MIT-0E4D3A)
 
 </div>
@@ -21,7 +21,8 @@ Type a product name and a category, get a **title, short description and SEO key
 > | **Mirror (Netlify)** | https://vitrine-ai-product-cards.netlify.app |
 > | **Mirror (GitHub Pages)** | https://bapanghosh0812.github.io/vitrine-ai-product-cards/ |
 > | **Try it in 10 seconds** | Open the Studio. **No login needed**: guest mode runs the full generator and saves cards in your browser. |
-> | **Accounts** | Sign up with email (with verification) or Google to sync cards, Brand Kit and settings across devices. |
+> | **Accounts** | Sign up with email (with verification), Google, or a one-time email link to sync cards, Brand Kit and settings across devices. |
+> | **Support** | Ask Kabir answers from the Help Center; "Talk to a human" emails the support team and sends you a branded confirmation with a ticket ID. |
 > | **Documents** | Solution write-up and Test Report PDFs are attached to the submission email. |
 
 ---
@@ -47,15 +48,16 @@ Type a product name and a category, get a **title, short description and SEO key
 - **Export:** PNG (1x/2x/3x), JSON, safe HTML snippet, copy text.
 - **Library:** favourites, search and category filter. Guests save locally; accounts sync through Firestore.
 - **Brand Kit:** brand name, voice, words to avoid and colours, injected into every prompt and used to tint templates.
-- **Accounts:** email/password with verification and reset, Google sign-in, consent records with re-consent on new versions, guest-card import.
-- **Ask Kabir:** a streaming support assistant grounded only in the in-repo Help Center, with sources, allow-listed action buttons, feedback and "Talk to a human" tickets.
+- **Accounts:** email/password with verification and reset, Google sign-in, passwordless email-link sign-in, consent records with re-consent on new versions, guest-card import.
+- **Ask Kabir:** a streaming support assistant grounded only in the in-repo Help Center, with sources, allow-listed action buttons and feedback.
+- **Human support by email:** guests and signed-in users can open a ticket (name, email, optional phone, message, optional chat transcript). The ticket lands in the support inbox with Reply-To set to the customer, and the customer instantly receives an emerald-and-gold confirmation email with the logo, a greeting, the ticket ID and links back to the app. Rate limits per IP and per recipient, a honeypot, header-injection checks and verified-email rules stop the form being used to spam anyone.
 - **Settings:** search plus ten sections (Account, Appearance, Brand Kit, Generation, Card & Export, History & Privacy, Notifications & Sound, Accessibility, Help, About).
-- **Profile:** 16 avatars, stats and eight badges. **Owner inbox** for support tickets (admin custom claim).
+- **Profile:** 16 avatars, stats and eight badges. An **owner inbox** page lists signed-in users' tickets (admin custom claim).
 - **Polish:** light, dark (emerald-black), OLED and system themes, spring motion, View Transitions, skeletons, toasts, command palette (`Ctrl/Cmd + K`), keyboard shortcuts, PWA with offline page.
 - **Legal pack:** 26-section Terms of Service (scroll-to-accept), Privacy Policy (DPDP Act 2023 + GDPR), Cookie Policy, AI Disclaimer, Acceptable Use Policy.
 
 ## Screenshots
-> Captured from the production build with sample copy (`npm run screenshots`). AI keys were not configured at capture time.
+> Captured from the production build with fixed sample copy (`npm run screenshots`) so the images are reproducible.
 
 | Studio | Dark theme |
 | --- | --- |
@@ -78,6 +80,7 @@ flowchart LR
   subgraph Edge["Vercel / Netlify functions · Hono API"]
     GEN[POST /api/generate]
     SUP[POST /api/support<br/>NDJSON stream]
+    TK[POST /api/support/ticket]
     H[GET /api/health]
     MW[zod · CORS allow-list · rate limits<br/>ID-token check · redaction]
   end
@@ -85,6 +88,7 @@ flowchart LR
     G[Groq<br/>primary]
     GM[Google Gemini Flash<br/>fallback]
   end
+  MAIL[Gmail SMTP<br/>support inbox + confirmation]
   subgraph FB["Firebase (Spark)"]
     AUTH[Authentication]
     FS[(Firestore<br/>owner-only rules)]
@@ -92,8 +96,9 @@ flowchart LR
   KB[(Help Center<br/>Markdown KB)]
   UI --> Store
   Store <--> LS
-  UI -- fetch --> GEN & SUP
-  GEN & SUP --> MW
+  UI -- fetch --> GEN & SUP & TK
+  GEN & SUP & TK --> MW
+  TK --> MAIL
   MW --> G
   MW -. fallback .-> GM
   SUP --> KB
@@ -122,6 +127,9 @@ Without Firebase values the app runs in guest mode only. Other useful scripts: `
 | `FIREBASE_PROJECT_ID` | Server | Verifies Firebase ID tokens with public keys (no service account on servers). |
 | `ALLOWED_ORIGINS` | Server | Extra CORS origins (same-host requests are always allowed). |
 | `AI_BUDGET_MS`, `AI_MOCK` | Server | Time budget per AI request; deterministic offline mock for tests. |
+| `SMTP_USER`, `SMTP_PASS` | Server only | Gmail account and app password that send support emails. |
+| `SUPPORT_INBOX` | Server | Where new tickets are delivered (defaults to `SMTP_USER`). |
+| `SITE_URL`, `MAIL_MOCK` | Server | Links and logo used in emails; `MAIL_MOCK=1` captures emails instead of sending (tests). |
 | `OWNER_EMAIL` | Local script | Account that receives the `admin` claim (`scripts/set-admin-claim.mjs`). |
 | `NG_APP_FIREBASE_*` | Build (public) | Firebase web config. Public by design; access is enforced by `firestore.rules`. |
 | `NG_APP_API_BASE`, `NG_APP_SITE_URL`, `NG_APP_SUPPORT_EMAIL` | Build (public) | API origin for GitHub Pages, canonical URL, grievance contact. |
@@ -129,7 +137,7 @@ Without Firebase values the app runs in guest mode only. Other useful scripts: `
 ## How AI is used
 **In the product**
 - **What:** generating a product title (≤ 60 characters target), a 2–3 sentence description (≈ 140–220 characters) and 4–10 SEO keywords; regenerating one field; three variations; answering support questions in Ask Kabir.
-- **Models:** Groq is the primary provider (`openai/gpt-oss-120b` by default, `llama-3.3-70b-versatile` as a second Groq model) and Google **Gemini Flash** (`gemini-2.5-flash` by default) is the automatic fallback. Model IDs are environment variables. The UI shows which provider answered.
+- **Models:** Groq is the primary provider (`openai/gpt-oss-120b` by default, `openai/gpt-oss-20b` as a second Groq model) and Google **Gemini Flash** (`gemini-3.1-flash-lite` by default) is the automatic fallback. Model IDs are environment variables. The UI shows which provider answered.
 - **Prompts:** a fixed system prompt defines copy rules (length, tone, plain text, no unverifiable claims). User input is serialised as JSON inside a `<product_data>` block and the model is told to treat it as data only (`server/lib/prompts.ts`). Brand Kit values and options are added as structured fields.
 - **Validation:** the provider must return structured JSON (AI SDK `Output.object`); the server re-validates with zod, strips links, HTML, markdown, emails and control characters, fixes lengths on word boundaries, de-duplicates keywords, retries once and then falls back to the next provider within a time budget.
 - **Safety:** AI output is rendered only as escaped text. Ask Kabir answers only from Help Center articles retrieved with BM25, can trigger only allow-listed actions, and every streamed byte passes a redaction filter that masks credentials and blocks system-prompt recitation (tested with an adversarial fake model in `server/security.spec.ts`).
@@ -152,17 +160,19 @@ Short records live in [`docs/adr/`](docs/adr):
 Visual language: ivory `#FBF7F0`, deep emerald `#0E4D3A` and gold `#C9A35B`; Instrument Serif for display and Geist for UI; Microsoft Fluent Emoji 3D for categories and avatars; spring easing (`linear()` curves) and View Transitions, all disabled by "Reduce motion".
 
 ## Testing
-All numbers below come from local runs on 17 November 2026 (see the Test Report PDF for details).
+All numbers below come from local runs on 18 November 2026 (see the Test Report PDF for details).
 
 | Suite | Tool | Result |
 | --- | --- | --- |
-| API unit + security tests | Vitest (Node) | **45 / 45 passed** · coverage: 72.0% statements, 76.4% lines, 84.1% functions |
-| Angular unit + component tests | Vitest (jsdom) via `ng test` | **34 / 34 passed** · coverage: 38.6% statements (UI flows are covered by e2e) |
+| API unit + security tests | Vitest (Node) | **55 / 55 passed** · coverage: 74.0% statements, 77.7% lines, 82.5% functions |
+| Angular unit + component tests | Vitest (jsdom) via `ng test` | **34 / 34 passed** · coverage: 37.3% statements (UI flows are covered by e2e) |
 | Firestore security rules | Firebase emulator + `@firebase/rules-unit-testing` | **15 / 15 passed** (IDOR with a second user, privilege escalation, validation) |
-| End-to-end | Playwright (Chromium desktop + Pixel 7 emulation), AI mocked | **57 passed, 1 skipped** (a mobile-only test on desktop) |
+| End-to-end | Playwright (Chromium desktop + Pixel 7 emulation), AI and email mocked | **63 passed, 1 skipped** (a mobile-only test on desktop) |
 | Accessibility | axe-core (WCAG 2.1 AA) inside e2e | **0 serious/critical violations** on 7 key pages |
-| Lighthouse | Mobile and desktop, 4 pages | **Performance 98–100, Accessibility 100, Best Practices 100, SEO 100** |
-| Security self-attack | `scripts/security-audit.ts` | **12 / 12 rounds passed** after fixing 5 findings |
+| Lighthouse | Mobile and desktop, 4 pages | **Performance 95–98 mobile, 99–100 desktop · Accessibility, Best Practices and SEO 100 on every page** |
+| Security self-attack | `scripts/security-audit.ts` | **13 / 13 rounds passed** after fixing 10 findings |
+| Live AI | `scripts/live-check.mjs` with the real keys | Groq (`gpt-oss-120b`) answered in 1.3 s, Gemini (`gemini-3.1-flash-lite`) in 2.4 s; Ask Kabir on the live model: **0 leaks** across 6 prompts (4 jailbreak or extraction attempts, 1 off-topic request, 1 normal question) |
+| Support email | Manual check with the real Gmail account | A ticket reached the support inbox and the branded confirmation reached the sender |
 
 Firefox and WebKit projects run in CI on Linux; this Windows machine blocks Playwright's Firefox/WebKit binaries, so they were not run locally.
 
@@ -174,7 +184,7 @@ Keys stay on the server, `.env.local` is gitignored, secretlint runs as a pre-co
 - **Vercel:** `npm run build:vercel` produces `.vercel/output` (static files + an esbuild-bundled Node function). Needs repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`; runtime secrets are set in the Vercel project. PRs get preview URLs posted as a comment.
 - **Netlify:** `netlify.toml` builds the static site and bundles `netlify/functions/api.mts`. Needs `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`.
 - **GitHub Pages:** built with base href `/vitrine-ai-product-cards/`, a `404.html` SPA fallback and the API pointed at Vercel.
-- **Firebase:** deploy `firestore.rules` and `firestore.indexes.json`; enable Email/Password and Google sign-in; add the three hosting domains to Authorized domains.
+- **Firebase:** project `vitrine-ai-cards` (Spark plan, Firestore in `asia-south1`). Rules and indexes are deployed; Email/Password, Email link and Google sign-in are enabled; the three hosting domains are in Authorized domains.
 
 ## Roadmap
 - Bulk generation from a CSV and Shopify/WooCommerce export formats.

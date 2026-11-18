@@ -2,10 +2,12 @@
  * Local API server for development: `npm run dev:api` (port 8787).
  * The Angular dev server proxies /api to it (see proxy.conf.json).
  */
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
 import { serve } from '@hono/node-server';
 
-if (existsSync('.env.local')) process.loadEnvFile('.env.local');
+// .env.local wins over stale machine-level variables during local development.
+if (existsSync('.env.local')) Object.assign(process.env, parseEnv(readFileSync('.env.local', 'utf8')));
 
 const { createApp, normaliseRequest } = await import('./app');
 const { readEnv } = await import('./env');

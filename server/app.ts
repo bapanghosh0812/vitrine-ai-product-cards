@@ -11,7 +11,10 @@ import { buildSupportSystem } from './lib/prompts';
 import { RateLimiter, RULES, type LimitResult } from './lib/rate-limit';
 import { looksLikePromptLeak, StreamRedactor } from './lib/redact';
 import { cleanMultiline } from './lib/sanitize';
-import { generateRequestSchema, supportRequestSchema } from './lib/schemas';
+import { generateRequestSchema, supportRequestSchema, ticketRequestSchema } from './lib/schemas';
+import { confirmationEmail, notificationEmail } from './lib/email-templates';
+import { createMailer, type Mailer } from './lib/mailer';
+import { randomTicketId } from './lib/ticket-id';
 
 type Env = { Variables: { caller: Caller | null; ip: string; requestId: string } };
 
@@ -43,10 +46,12 @@ export function isAllowedOrigin(origin: string, host: string | undefined, env: S
 /** Test seams: lets security tests plug in an adversarial model stream. */
 export interface AppDeps {
   supportStream?: typeof openSupportStream;
+  mailer?: Mailer | null;
 }
 
 export function createApp(env: ServerEnv = readEnv(), deps: AppDeps = {}) {
   const supportStream = deps.supportStream ?? openSupportStream;
+  const mailer = deps.mailer !== undefined ? deps.mailer : createMailer(env);
   const app = new Hono<Env>().basePath('/api');
   const limiter = new RateLimiter();
   const secrets = secretValues(env);
@@ -307,6 +312,87 @@ export function createApp(env: ServerEnv = readEnv(), deps: AppDeps = {}) {
         ...Object.fromEntries(c.res.headers.entries()),
       },
     });
+  });
+
+
+  /* ------------------------------------------------------------- support ticket */
+  // Sends the ticket to the support inbox and a branded confirmation to the requester.
+  // Anti-abuse: hard rate limits per IP, per recipient and globally; honeypot field;
+  // guests' confirmations contain no user-supplied text; signed-in users can only
+  // receive mail at the verified address from their Firebase token.
+  app.post('/support/ticket', auth, async (c) => {
+    const caller = c.get('caller');
+    const ip = c.get('ip');
+    const burst = limiter.checkAll([
+      { key: `tk:ip:${ip}`, rule: RULES.ticketIpBurst },
+      { key: `tk:ipd:${ip}`, rule: RULES.ticketIpDay },
+      { key: 'tk:global', rule: RULES.ticketGlobalDay },
+    ]);
+    if (!burst.ok) return limited(c, burst);
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json(errorBody('invalid_json', 'The request body is not valid JSON.'), 400);
+    }
+    const parsed = ticketRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      return c.json(errorBody('invalid_input', `Please check "${issue?.path.join('.') || 'form'}": ${issue?.message ?? 'invalid value'}.`), 422);
+    }
+    const t = parsed.data;
+    const ticketId = randomTicketId();
+
+    // Honeypot filled: behave as if it worked, send nothing.
+    if (t.website?.trim()) {
+      log('ticket_honeypot', { requestId: c.get('requestId') });
+      return c.json({ ticketId, emailed: true, confirmation: true });
+    }
+
+    const verified = !!caller?.email && caller.emailVerified;
+    const email = (caller?.email ?? t.email ?? '').toLowerCase();
+    if (!email) return c.json(errorBody('invalid_input', 'Please enter your email so we can reply.'), 422);
+
+    const recipient = limiter.check(`tk:to:${email}`, RULES.ticketRecipientDay);
+    if (!recipient.ok) return limited(c, recipient);
+
+    if (!mailer || !env.supportInbox) {
+      return c.json(errorBody('mail_unconfigured', 'Support email is not configured on this deployment yet. Please use GitHub Issues.'), 503);
+    }
+
+    const submittedAt = new Date();
+    const note = notificationEmail({
+      ticketId,
+      siteUrl: env.siteUrl,
+      name: t.name,
+      email,
+      phone: t.phone || undefined,
+      subject: t.subject,
+      message: t.message,
+      page: t.page,
+      transcript: t.transcript,
+      verified,
+      uid: caller?.uid,
+      submittedAt,
+    });
+    const confirm = confirmationEmail({
+      ticketId,
+      siteUrl: env.siteUrl,
+      name: verified ? t.name : undefined,
+      subject: verified ? t.subject : undefined,
+      submittedAt,
+    });
+
+    const [toInbox, toUser] = await Promise.allSettled([
+      mailer.send({ to: env.supportInbox, subject: note.subject, html: note.html, text: note.text, replyTo: email }),
+      mailer.send({ to: email, subject: confirm.subject, html: confirm.html, text: confirm.text, replyTo: env.supportInbox }),
+    ]);
+    log('ticket', { ticketId, inbox: toInbox.status, confirmation: toUser.status, verified, requestId: c.get('requestId') });
+    if (toInbox.status === 'rejected') {
+      return c.json(errorBody('mail_failed', 'We could not send your request right now. Please try again in a minute.'), 502);
+    }
+    return c.json({ ticketId, emailed: true, confirmation: toUser.status === 'fulfilled' });
   });
 
   app.notFound((c) => c.json(errorBody('not_found', 'No such API route.'), 404));

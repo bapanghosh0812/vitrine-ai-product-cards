@@ -1,8 +1,8 @@
 ---
 title: Privacy Policy
 summary: What personal data Vitrine collects, why, which providers process it, how long we keep it and how you can exercise your rights under the DPDP Act and GDPR.
-version: 2026-11-17
-updated: 17 November 2026
+version: 2026-11-18
+updated: 18 November 2026
 order: 2
 ---
 This Privacy Policy explains how Vitrine handles personal data. It is written to meet the requirements of India's **Digital Personal Data Protection Act, 2023** ("**DPDP Act**") and, where they apply, the **EU and UK General Data Protection Regulation** ("**GDPR**").
@@ -21,7 +21,7 @@ The data fiduciary (under the DPDP Act) and controller (under the GDPR) is **Bap
 
 **d. Profile and preferences.** Avatar choice, settings (theme, generation defaults, export and accessibility options) and usage counters (cards generated, saved and exported) shown on your profile.
 
-**e. Support data.** Questions you ask Ask Kabir (sent to our server to generate an answer), and support tickets you create, including subject, message, an optional chat transcript, the page you were on and your account email.
+**e. Support data.** Questions you ask Ask Kabir (sent to our server to generate an answer), and support tickets you send, including your name, email address, an optional phone number, the subject, message, an optional chat transcript and the page you were on. Tickets are delivered to our support mailbox by email, and we send you an automatic confirmation email with your ticket ID. Signed-in users also get a copy stored in their account.
 
 **f. Technical data.** IP address and request metadata processed transiently by our hosting providers and our API for security and rate limiting, and minimal server logs (event type, provider used, response time, request ID). Our logs do not store the text of your inputs or outputs.
 
@@ -50,6 +50,7 @@ We do not sell or rent personal data. We share it only with service providers th
 | Vercel Inc. | Website hosting and serverless API | Request metadata, inputs in transit |
 | Netlify Inc. | Mirror hosting and serverless API | Request metadata, inputs in transit |
 | GitHub Inc. | Source code hosting, GitHub Pages mirror, issue tracker | Request metadata; anything you post in public issues |
+| Google LLC (Gmail) | Delivery of support tickets and confirmation emails | Name, email, optional phone, ticket content |
 | Groq, Inc. | Primary AI provider | Product details, support questions |
 | Google LLC (Gemini API) | Fallback AI provider | Product details, support questions |
 
@@ -61,7 +62,7 @@ Our providers may process data in India, the United States, the European Union a
 ## 7. Retention
 - Account data, cards, settings and Brand Kit: kept while your account is active; deleted when you delete your account, and removed from provider backups within their standard cycles (typically up to 30 days).
 - Consent records: kept for the life of the account and up to 12 months after deletion to demonstrate compliance, then deleted.
-- Support tickets: kept for up to 24 months after resolution, then deleted.
+- Support tickets and related emails: kept for up to 24 months after resolution, then deleted.
 - Server logs: kept by hosting providers for their standard retention (typically 1 to 30 days).
 - Browser storage: stays on your device until you clear it (Settings, History & Privacy, Clear local data).
 

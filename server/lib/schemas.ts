@@ -6,7 +6,7 @@ import {
   LIMITS,
   TONE_IDS,
 } from '../../shared/constants';
-import { cleanText } from './sanitize';
+import { cleanMultiline, cleanText } from './sanitize';
 
 /** A trimmed, sanitised single-line string with length bounds. */
 const line = (max: number, min = 0) =>
@@ -96,3 +96,36 @@ export const supportRequestSchema = z
   });
 
 export type SupportInput = z.infer<typeof supportRequestSchema>;
+
+const multiline = (max: number, min = 0) =>
+  z
+    .string()
+    .max(max * 2)
+    .transform((v) => cleanMultiline(v))
+    .pipe(z.string().min(min).max(max));
+
+export const ticketRequestSchema = z
+  .object({
+    name: line(LIMITS.ticketNameMax, 2),
+    /** Required for guests; signed-in users always use the verified email from their token. */
+    email: z.string().trim().toLowerCase().max(120).email().optional(),
+    phone: z
+      .string()
+      .trim()
+      .max(LIMITS.ticketPhoneMax)
+      .regex(/^\+?[0-9][0-9 ()-]{6,18}$/, 'Phone must be digits, spaces, +, ( ) or -')
+      .optional()
+      .or(z.literal('')),
+    subject: line(LIMITS.ticketSubjectMax, 3),
+    message: multiline(LIMITS.ticketMessageMax, 10),
+    transcript: z
+      .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(1_200).transform((v) => cleanMultiline(v).slice(0, 600)) }).strict())
+      .max(8)
+      .optional(),
+    page: z.string().max(80).regex(/^\/[a-z0-9\-/]*$/i).optional(),
+    /** Honeypot: real users never see or fill this field. */
+    website: z.string().max(200).optional(),
+  })
+  .strict();
+
+export type TicketInput = z.infer<typeof ticketRequestSchema>;

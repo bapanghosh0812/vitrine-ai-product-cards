@@ -13,6 +13,8 @@ export interface Caller {
   uid: string;
   admin: boolean;
   emailVerified: boolean;
+  email?: string;
+  name?: string;
 }
 
 let app: App | null = null;
@@ -33,6 +35,8 @@ export async function verifyBearer(header: string | undefined, projectId: string
       uid: decoded.uid,
       admin: decoded['admin'] === true,
       emailVerified: decoded.email_verified === true,
+      email: typeof decoded.email === 'string' ? decoded.email : undefined,
+      name: typeof decoded['name'] === 'string' ? (decoded['name'] as string) : undefined,
     };
   } catch {
     return null;

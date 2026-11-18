@@ -11,7 +11,7 @@ updated: 2026-11-17
 Kabir is Vitrine's support assistant, the mascot in the bottom-right corner. Kabir answers questions about using Vitrine using only this Help Center, and can open the right page for you. Kabir cannot see your cards, account details or anyone else's data, and never asks for passwords.
 
 ## Talk to a human
-Choose **Talk to a human** in the chat. Write a short subject and message; you receive a ticket ID such as VT-7K2M9Q. Tickets are stored securely and only you and the Vitrine team can read them. You need to be signed in to open a ticket so we can reply to your account email; guests can also report issues on the project's GitHub Issues page.
+Choose **Talk to a human** in the chat. Enter your name, email (filled in automatically when you are signed in), an optional phone number, a subject and your message. You immediately get a ticket ID such as VT-7K2M9Q on screen and a confirmation email with the same ID. The Vitrine team receives your request by email and replies within 1 to 2 business days. Never include passwords or card details. Guests can open tickets too; signed-in users also see their tickets on the Profile page.
 
 ## Feedback
 Use the thumbs up and thumbs down buttons under any answer to tell us whether it helped.

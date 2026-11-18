@@ -1,8 +1,8 @@
 # Security self-attack report
 
-Run: 2026-11-17T17:15:38.887Z against the production build with production headers (`scripts/security-audit.ts`).
+Run: 2026-11-18T04:14:02.638Z against the production build with production headers (`scripts/security-audit.ts`).
 
-**Result: 12/12 rounds passed.**
+**Result: 13/13 rounds passed.**
 
 | # | Round | Attack | Result |
 | --- | --- | --- | --- |
@@ -17,6 +17,7 @@ Run: 2026-11-17T17:15:38.887Z against the production build with production heade
 | R9 | Oversized and malformed payloads | 1 MB body, truncated JSON, wrong types, 5000-level nesting, wrong content type, control/bidi characters, oversized chat message | PASS |
 | R10 | Dependency audit | npm audit of production and all dependencies | PASS |
 | R11 | Path traversal and hidden files | Encoded ../ traversal, direct .env.local request, wrong HTTP method, malformed percent-encoding and NUL bytes in paths | PASS |
+| R13 | Support ticket abuse (email spam relay) | Burst of tickets from one IP, many tickets to one victim address from different IPs, CRLF header injection in the email field, client-set identity fields, bot honeypot | PASS |
 | R12 | Secrets in git history and working tree | Search the full git history and run secretlint over the working tree | PASS |
 
 ## Observations
@@ -51,7 +52,8 @@ Run: 2026-11-17T17:15:38.887Z against the production build with production heade
 
 ### R6. Built bundle secret scan
 - Expected: Zero matches (the Firebase web config is public by design and is the only key-like value allowed)
-- scanned 190 files, 1 real secret value(s) checked, matches: 0
+- scanned 191 files, 4 real secret value(s) checked (AI keys, SMTP app password), matches: 0
+- public Firebase web key allow-listed: yes
 
 ### R7. CORS from a foreign origin
 - Expected: 403 without Access-Control-Allow-Origin; allow-listed origin gets 204 with ACAO
@@ -84,7 +86,7 @@ Run: 2026-11-17T17:15:38.887Z against the production build with production heade
 ### R10. Dependency audit
 - Expected: No high or critical vulnerabilities in production dependencies
 - production: {"info":0,"low":0,"moderate":0,"high":0,"critical":0,"total":0}
-- all (incl. dev tooling): {"info":0,"low":0,"moderate":7,"high":0,"critical":0,"total":7}
+- all (incl. dev tooling): {"info":0,"low":0,"moderate":5,"high":24,"critical":0,"total":29}
 
 ### R11. Path traversal and hidden files
 - Expected: No source or secret files served; API returns JSON 404/405
@@ -94,6 +96,15 @@ Run: 2026-11-17T17:15:38.887Z against the production build with production heade
 - /api traversal → 404
 - malformed percent-encoding → static 200, api 404; NUL byte path → 404
 - server healthy after all probes → 200 (a malformed-URL crash in the local preview server was found and fixed in this round)
+
+### R13. Support ticket abuse (email spam relay)
+- Expected: At most 3 tickets per IP per 10 minutes and 3 per recipient per day; injected or unknown fields rejected; bots get a fake success with no email sent
+- one IP, 5 tickets → 200, 200, 200, 429, 429
+- one victim address from 4 IPs → 200, 200, 200, 429
+- CRLF in email field → 422
+- client-set uid/verified fields → 422
+- honeypot filled → 200 (no email sent; covered by server/ticket.spec.ts)
+- HTML/header escaping and guest confirmations without user text: server/ticket.spec.ts
 
 ### R12. Secrets in git history and working tree
 - Expected: No credentials committed; .env.local and service-account files ignored
@@ -105,6 +116,8 @@ Run: 2026-11-17T17:15:38.887Z against the production build with production heade
 ## Findings fixed during testing
 | Area | Finding | Fix |
 | --- | --- | --- |
+| Configuration | A stale machine-level GEMINI_API_KEY silently overrode the project key in local runs. | Local scripts now let .env.local win over machine variables; keys verified against the providers' model-list APIs. |
+| AI provider drift | gemini-2.5-flash is no longer offered to new keys and llama-3.3-70b-versatile is gone from Groq. | Defaults moved to gemini-3.1-flash-lite and openai/gpt-oss-20b (still environment-configurable); fallback chain re-verified live. |
 | Dependency audit | 4 high-severity advisories in a transitive gRPC package (@grpc/grpc-js via Firebase). | npm override to @grpc/grpc-js ^1.14.7; production audit now 0 vulnerabilities. |
 | Secret scan | Redaction patterns matched ordinary words such as "ask-kabir-support-assistant" (could mask normal bot text). | Word-boundary patterns that require key-like structure; scanner false positives (library PEM format checks) documented. |
 | Path robustness | A malformed percent-encoded URL (/%E0%A4%A) crashed the local preview server (decodeURIComponent). | Decode wrapped in try/catch, NUL bytes rejected; API already returned JSON 404. |

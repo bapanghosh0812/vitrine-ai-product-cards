@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService, authMessage } from '../../core/auth.service';
 import { Emoji } from '../../shared/ui/emoji';
@@ -21,10 +21,10 @@ import { Icon } from '../../shared/ui/icon';
       <a routerLink="/auth/sign-in" class="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><app-icon name="arrow-left" [size]="15" /> Back to sign in</a>
       <h1 class="font-display text-[2.6rem] leading-tight text-ink">Forgot your password?</h1>
       <p class="mt-2 text-muted">Enter your email and we will send you a link to choose a new one.</p>
-      <form class="mt-8 grid gap-4" (ngSubmit)="submit()" novalidate>
+      <form [formGroup]="form" class="mt-8 grid gap-4" (ngSubmit)="submit()" novalidate>
         <div>
           <label for="fp-email" class="field-label">Email</label>
-          <input id="fp-email" type="email" class="field" [formControl]="email" autocomplete="email" [attr.aria-invalid]="email.invalid && email.touched" />
+          <input id="fp-email" type="email" class="field" formControlName="email" autocomplete="email" [attr.aria-invalid]="email.invalid && email.touched" />
           @if (email.invalid && email.touched) {
             <p class="field-error" role="alert">Please enter a valid email.</p>
           }
@@ -40,6 +40,7 @@ import { Icon } from '../../shared/ui/icon';
 export default class ForgotPasswordPage {
   protected readonly auth = inject(AuthService);
   protected readonly email = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] });
+  protected readonly form = new FormGroup({ email: this.email });
   protected readonly busy = signal(false);
   protected readonly sent = signal(false);
   protected readonly error = signal('');

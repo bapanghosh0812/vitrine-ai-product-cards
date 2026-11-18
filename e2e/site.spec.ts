@@ -75,6 +75,30 @@ test.describe('App shell', () => {
     await expect(page.locator('#su-terms')).toBeChecked();
   });
 
+  test('sign-in offers a passwordless email link', async ({ page }) => {
+    await page.goto('/auth/sign-in');
+    await page.getByTestId('use-link').click();
+    await expect(page.getByTestId('send-link')).toBeVisible();
+    await expect(page.locator('#password')).toHaveCount(0);
+    await page.getByTestId('send-link').click();
+    await expect(page.getByText('Please enter a valid email.')).toBeVisible();
+    await page.getByRole('button', { name: 'Sign in with a password instead' }).click();
+    await expect(page.locator('#password')).toBeVisible();
+  });
+
+  test('forgot password validates the email without reloading the page', async ({ page }) => {
+    await page.goto('/auth/forgot-password');
+    await page.getByLabel('Email').fill('not-an-email');
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+    await expect(page.getByText('Please enter a valid email.')).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/forgot-password$/);
+  });
+
+  test('a fake email sign-in link is rejected', async ({ page }) => {
+    await page.goto('/auth/email-link?mode=signIn&oobCode=not-a-real-code');
+    await expect(page.getByTestId('link-invalid')).toBeVisible();
+  });
+
   test('mobile shows the bottom navigation', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'mobile only');
     await page.goto('/studio');
@@ -95,11 +119,19 @@ test.describe('Ask Kabir support bot', () => {
     await expect(panel.getByText('Sources:')).toBeVisible();
   });
 
-  test('guests are asked to sign in before opening a ticket', async ({ page }) => {
+  test('guests can open a support ticket and get a ticket ID', async ({ page }) => {
     await page.goto('/help');
     await page.getByTestId('kabir-launcher').click();
     await page.getByRole('button', { name: /Talk to a human/ }).click();
-    await expect(page.getByTestId('kabir-panel').getByText('Please sign in so we can reply')).toBeVisible();
+    const panel = page.getByTestId('kabir-panel');
+    await panel.getByLabel('Your name').fill('Asha Rao');
+    await panel.getByLabel('Email').fill('asha@example.com');
+    await panel.getByLabel(/Phone/).fill('+91 98765 43210');
+    await panel.getByLabel('Subject').fill('PNG export question');
+    await panel.getByLabel('How can we help?').fill('My PNG export looks blurry on my phone. Any tips?');
+    await panel.getByTestId('ticket-submit').click();
+    await expect(panel.getByTestId('ticket-id')).toHaveText(/^VT-[A-Z0-9]{6}$/);
+    await expect(panel.getByText('A confirmation is on its way to')).toBeVisible();
   });
 });
 

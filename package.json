@@ -10,7 +10,7 @@
     "prebuild": "npm run content && npm run env",
     "build": "ng build",
     "build:vercel": "npm run build && node scripts/postbuild.mjs --target vercel && node scripts/build-api.mjs --target vercel",
-    "build:netlify": "npm run build && node scripts/postbuild.mjs --target netlify",
+    "build:netlify": "npm run build && node scripts/postbuild.mjs --target netlify && node scripts/build-api.mjs --target netlify",
     "build:pages": "npm run content && npm run env && ng build --base-href /vitrine-ai-product-cards/ && node scripts/postbuild.mjs --target pages",
     "serve:dist": "tsx scripts/serve-dist.ts",
     "lint": "ng lint",

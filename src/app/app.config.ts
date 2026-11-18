@@ -31,7 +31,14 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions({
         skipInitialTransition: true,
         onViewTransitionCreated: ({ transition }) => {
-          if (document.documentElement.getAttribute('data-motion') === 'reduced') transition.skipTransition();
+          if (document.documentElement.getAttribute('data-motion') === 'reduced') {
+            transition.skipTransition();
+            return;
+          }
+          // An animation must never block navigation. If the browser stalls the transition
+          // (seen in headless WebKit), finish it without animating so the route still changes.
+          const watchdog = setTimeout(() => transition.skipTransition(), 1200);
+          transition.finished.finally(() => clearTimeout(watchdog)).catch(() => undefined);
         },
       }),
     ),

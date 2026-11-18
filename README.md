@@ -174,7 +174,7 @@ All numbers below come from local runs on 18 November 2026 (see the Test Report 
 | End-to-end | Playwright (Chromium desktop + Pixel 7 emulation), AI and email mocked | **69 passed, 1 skipped** (a mobile-only test on desktop). On GitHub Actions the same suite also runs on Firefox, WebKit and iPhone 14 and passes. |
 | Accessibility | axe-core (WCAG 2.1 AA) inside e2e | **0 serious/critical violations** on 7 key pages |
 | Lighthouse | Mobile and desktop, 4 pages, median of 3 runs | **Performance 97–100 mobile, 99–100 desktop · Accessibility, Best Practices and SEO 100 on every page** |
-| Security self-attack | `scripts/security-audit.ts` | **13 / 13 rounds passed** after fixing 14 findings |
+| Security self-attack | `scripts/security-audit.ts` | **13 / 13 rounds passed** after fixing 16 findings |
 | Live AI | `scripts/live-check.mjs` with the real keys | Groq (`gpt-oss-120b`) answered in 1.3 s, Gemini (`gemini-3.1-flash-lite`) in 2.4 s; Ask Kabir on the live model: **0 leaks** across 6 prompts (4 jailbreak or extraction attempts, 1 off-topic request, 1 normal question) |
 | Support email | Manual check with the real Gmail account | A ticket reached the support inbox and the branded confirmation reached the sender |
 
@@ -193,10 +193,10 @@ flowchart LR
   Main --> VP[Vercel production]
   Main --> NP[Netlify production]
 ```
-- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, Angular and API unit tests, Firestore rules tests in the emulator, Playwright e2e on Chromium, Firefox, WebKit and two phone profiles, gitleaks over the full history, secretlint and `npm audit`.
+- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, Angular and API unit tests, Firestore rules tests in the emulator, Playwright e2e on Chromium, Firefox, WebKit and two phone profiles (one parallel job per browser), gitleaks over the full history, secretlint and `npm audit`.
 - **CD:** GitHub Pages deploys from CI only after every check passes. Vercel and Netlify deploy through their Git integrations with the same build commands (`vercel.json`, `netlify.toml`): production on every push to `main` and a preview URL on every pull request.
 - **Vercel:** `npm run build:vercel` produces `.vercel/output` (static files + an esbuild-bundled Node function for `/api/*`).
-- **Netlify:** `netlify.toml` builds the static site and bundles `netlify/functions/api.mts`; `/api/*` is rewritten to the function.
+- **Netlify:** `npm run build:netlify` builds the static site and prebuilds one self-contained API bundle (`dist/netlify/functions/api.mjs`, every dependency inlined) that Netlify ships as-is; `/api/*` is rewritten to the function.
 - **GitHub Pages:** built with base href `/vitrine-ai-product-cards/`, a `404.html` SPA fallback and the API pointed at Vercel.
 - **Hosting env vars:** `node scripts/export-deploy-env.mjs` turns `.env.local` into gitignored `.env.vercel`, `.env.netlify` and `.env.github-variables` files to import in each dashboard, so keys never go through a command line.
 - **Firebase:** project `vitrine-ai-cards` (Spark plan, Firestore in `asia-south1`). Rules and indexes are deployed; Email/Password, Email link and Google sign-in are enabled; the hosting domains are in Authorized domains.

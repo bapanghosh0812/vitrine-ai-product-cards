@@ -12,6 +12,8 @@ export default defineConfig({
   retries: process.env['CI'] ? 1 : 0,
   workers: process.env['CI'] ? 2 : 4,
   timeout: 45_000,
+  // On CI, stop cleanly (with a report) before the job's own time limit kills everything.
+  globalTimeout: process.env['CI'] ? 15 * 60_000 : 0,
   expect: { timeout: 8_000 },
   reporter: [
     // On CI, failures also become GitHub annotations (visible on the run page without opening logs).

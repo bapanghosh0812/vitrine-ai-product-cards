@@ -88,12 +88,26 @@ jobs:
   gitleaks:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.28.0
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The CLI scans the whole history on every run. (gitleaks-action builds a "<first>^..<last>"
+      # range from the push payload, which breaks on a repository's first push.)
+      - name: Install gitleaks (pinned, checksum verified)
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          file="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$file" "$base/$file"
+          curl -sSfL -o checksums.txt "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " ${file}\$" checksums.txt | sha256sum -c -
+          tar -xzf "$file" gitleaks
+      - name: Scan the full git history
+        run: ./gitleaks git . --config .gitleaks.toml --redact --verbose --exit-code 1 --report-format sarif --report-path gitleaks.sarif
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: gitleaks-results, path: gitleaks.sarif, if-no-files-found: ignore, retention-days: 7 }
 
   # ------------------------------------------------------------------ CD (gated on CI)
   deploy-vercel:

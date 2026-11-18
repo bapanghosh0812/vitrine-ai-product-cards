@@ -10,8 +10,9 @@
   AI_BUDGET_MS = "8500"
 
 [functions]
+  # Bundle everything (like the Vercel build). Keeping firebase-admin external made the runtime
+  # require() the ESM-only "jose" package, which older Lambda Node versions cannot do.
   node_bundler = "esbuild"
-  external_node_modules = ["firebase-admin"]
 
 # API: /api/* -> the "api" function (the function normalises the path back to /api/*)
 [[redirects]]

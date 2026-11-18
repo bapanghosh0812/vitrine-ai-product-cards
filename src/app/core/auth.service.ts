@@ -39,7 +39,7 @@ const MESSAGES: Record<string, string> = {
   'auth/requires-recent-login': 'For your security, please sign in again and then retry.',
   'auth/user-disabled': 'This account has been disabled. Please contact support.',
   'auth/operation-not-allowed': 'This sign-in method is not enabled yet.',
-  'auth/unauthorized-domain': 'Google sign-in is not enabled for this website address yet.',
+  'auth/unauthorized-domain': 'Google sign-in is not available on this preview address. Use the main site, or sign in with email.',
   'auth/unauthorized-continue-uri': 'Email links are not enabled for this website address yet.',
   'auth/invalid-action-code': 'This sign-in link has expired or was already used. Please request a new one.',
   'auth/expired-action-code': 'This sign-in link has expired. Please request a new one.',

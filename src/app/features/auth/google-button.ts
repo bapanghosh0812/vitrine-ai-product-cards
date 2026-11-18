@@ -1,4 +1,5 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { PUBLIC_ENV } from '../../../environments/public-env';
 import { AuthService, authMessage } from '../../core/auth.service';
 
 @Component({
@@ -14,6 +15,12 @@ import { AuthService, authMessage } from '../../core/auth.service';
       </svg>
       {{ label() }}
     </button>
+    @if (wrongHost()) {
+      <p class="mt-2 rounded-xl bg-surface-2 px-3 py-2.5 text-xs leading-relaxed text-muted" role="status" data-testid="google-wrong-host">
+        This is a preview address. Google sign-in works on the main site:
+        <a class="link font-medium" [href]="mainSignIn">{{ mainHost }}</a>
+      </p>
+    }
   `,
 })
 export class GoogleButton {
@@ -23,6 +30,10 @@ export class GoogleButton {
   readonly failed = output<string>();
   private readonly auth = inject(AuthService);
   protected readonly busy = signal(false);
+  /** Set when Firebase rejects this host (e.g. a per-deployment preview URL). */
+  protected readonly wrongHost = signal(false);
+  protected readonly mainSignIn = `${PUBLIC_ENV.siteUrl}/auth/sign-in`;
+  protected readonly mainHost = PUBLIC_ENV.siteUrl.replace(/^https?:\/\//, '');
 
   constructor() {
     afterNextRender(() => this.auth.warmUpGoogle());
@@ -34,6 +45,7 @@ export class GoogleButton {
       const cred = await this.auth.signInWithGoogle();
       if (cred) this.signedIn.emit();
     } catch (e) {
+      this.wrongHost.set((e as { code?: string })?.code === 'auth/unauthorized-domain');
       this.failed.emit(authMessage(e));
     } finally {
       this.busy.set(false);

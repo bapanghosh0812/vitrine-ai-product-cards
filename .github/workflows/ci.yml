@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
       - name: Generated content is up to date
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '21' }
@@ -73,7 +73,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
       - uses: actions/download-artifact@v4
@@ -110,7 +110,7 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - name: Skip when Vercel is not configured
         id: check
@@ -140,7 +140,7 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - name: Skip when Netlify is not configured
         id: check
@@ -166,7 +166,7 @@ jobs:
     environment: { name: github-pages, url: '${{ steps.pages.outputs.page_url }}' }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: '${{ env.NODE_VERSION }}', cache: npm }
       - run: npm ci --no-audit --no-fund
       - uses: actions/configure-pages@v5
